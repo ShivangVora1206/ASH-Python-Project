@@ -31,8 +31,11 @@ text_font     = (cfg.get (sec, "text_font",    "Courier"), cfg.get (sec, "text_f
 entry_font    = (cfg.get (sec, "entry_font",   "Courier"), cfg.get (sec, "entry_font_size",    14), "normal")
 button_font   = (cfg.get (sec, "button_font",  "Courier"), cfg.get (sec, "button_font_size",   14), "normal")
 
-button_bg = cfg.get (sec, "button_bg", "brown")
-label_bg  = cfg.get (sec, "text_bg", "brown")
+headline_bg = cfg.get (sec, "headline_bg", "gray")
+button_bg   = cfg.get (sec, "button_bg", "gray")
+label_bg    = cfg.get (sec, "text_bg",   "gray")
+page_bg     = cfg.get (sec, "page_bg",   "gray")
+entry_bg    = cfg.get (sec, "entry_bg",  "gray")
 
 
 # This function might be moved into class database.Database
@@ -71,51 +74,44 @@ class Page:
     page_addcard = None
     page_main    = None
     root         = None
-    image        = None
 
     # To frame_main_bottom add a button, that invokes adding a card
-    def __init__ (self, frame_main_bottom, page_main, root, bg_image, db):
+    def __init__ (self, frame_main_bottom, page_main, root, db):
         self.db        = db
         self.page_main = page_main
         self.root      = root
-        self.image     = bg_image
         button_cardadd = Button (frame_main_bottom, text="Add card", command=self.show_page_cmd)
         button_cardadd.pack()
 
     def show_page_cmd (self):
         print ("--- show_page_cmd")
-
-        img = PIL.Image.open ("Final_Card_Font.jpg")
-        img = PIL.ImageTk.PhotoImage (img.resize ((600,600)))
-        bg_image_label  = Label (self.root, image=img)
-        bg_image_label.image = img
-#         bg_image_label  = Label (f, image=img)
-#         bg_image_label.place (relx=0.5, rely=0.5, anchor="center")
-#         self.image = bg_image_label
-
         f = Frame (self.root)
-        f.configure (background = "brown", padx=50, pady=50)
-        mess_headline   = Label (f, text="Add a card.", font=headline_font, bg=label_bg)
-        mess_de         = Label (f, text="German",      font=text_font, bg=label_bg)
-        mess_en         = Label (f, text="English",     font=text_font, bg=label_bg)
-        mess_desc       = Label (f, text="Description", font=text_font, bg=label_bg)
-        self.mess_err   = Label (f, text="<>",          font=text_font, bg=label_bg)
-        self.entry_de   = Entry (f, width=32, font=entry_font)
-        self.entry_en   = Entry (f, width=32, font=entry_font)
-        self.entry_desc = Entry (f, width=72, font=entry_font)
+        f.configure (background = page_bg, padx=50, pady=50)
+        mess_headline   = Label (f, text="Add a Card",  font=headline_font, bg=headline_bg, padx=20, pady=7)
+        mess_de         = Label (f, text="German",      font=text_font, bg=label_bg, padx=10, pady=5)
+        mess_en         = Label (f, text="English",     font=text_font, bg=label_bg, padx=10, pady=5)
+        mess_desc       = Label (f, text="Description", font=text_font, bg=label_bg, padx=10, pady=5)
+        self.mess_err   = Label (f, text="<>",          font=text_font, bg=label_bg, padx=10, pady=7)
+        self.entry_de   = Entry (f, width=32, font=entry_font, bg=entry_bg)
+        self.entry_en   = Entry (f, width=32, font=entry_font, bg=entry_bg)
+        self.entry_desc = Entry (f, width=72, font=entry_font, bg=entry_bg)
         button_add      = Button (f, text="Add",  command=self.add_word_cmd, font=button_font, bg=button_bg)
         button_back     = Button (f, text="Back", command=self.back_cmd,     font=button_font, bg=button_bg)
 
-        mess_headline.pack()
-        mess_de.pack (anchor="w")
-        self.entry_de.pack (side="top", anchor="w")
-        mess_en.pack (anchor="w")
-        self.entry_en.pack (side="top", anchor="w")
-        mess_desc.pack (anchor="w")
-        self.entry_desc.pack (side="top", anchor="w")
-        button_add.pack()
-        button_back.pack()
-        self.mess_err.pack()
+        # anchor defaults to nw corner of widget
+        x = 50
+        y = 70
+        mess_headline.place     (x=x,     y=0.5*y, anchor="sw")
+        mess_de.place           (x=x,     y=1*y, anchor="sw")
+        self.entry_de.place     (x=x,     y=1*y, anchor="nw")
+        mess_en.place           (x=x,     y=2*y, anchor="sw")
+        self.entry_en.place     (x=x,     y=2*y, anchor="nw")
+        mess_desc.place         (x=x,     y=3*y, anchor="sw")
+        self.entry_desc.place   (x=x,     y=3*y, anchor="nw")
+        button_add.place        (x=x,     y=4*y)
+        button_back.place       (x=x+100, y=4*y)
+        self.mess_err.place     (x=x+300, y=4*y)
+
         self.page_main.pack_forget()
         f.pack (expand=True, fill="both")
 
