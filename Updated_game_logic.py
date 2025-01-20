@@ -184,7 +184,8 @@ canvas_game.bind("<Configure>", update_canvas_binding)
 # Add a button to frame_main_bottom,
 # that temporarily switches page_main to page_cardadd, providing functionality to add cards to db.
 # Saves db after each add.
-cardadd.Page (frame_main_bottom, page_main, root, db)
+button_style = (fontM,)
+cardadd.Page (frame_main_bottom, page_main, button_style, root, db)
 
 
 # Initial Setup

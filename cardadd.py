@@ -8,34 +8,32 @@ A card holds data for a words
 
  * english meaning
  * german meaning
- * description in a short sentence.
+ * optionaly a description in a short sentence.
 """
 
 
-# TODO: ??? Check input for what: only ASCII? No!
-# TODO: enter -> next entry or add
-# TODO: pick color from image
+# TODO: ??? Check user input: How? Only ASCII? No!
+# TODO: ??? Enter -> next entry or add
 
 
 from tkinter import *
-from tkinter import ttk
-import PIL
 
 import config
 
-cfg = config.Config ("config.ini")
 
+cfg = config.Config ("config.ini")
 sec = "default"
+
 headline_font = (cfg.get (sec, "headline_font","Courier"), cfg.get (sec, "headline_font_size", 14), "normal")
 text_font     = (cfg.get (sec, "text_font",    "Courier"), cfg.get (sec, "text_font_size",     14), "normal")
 entry_font    = (cfg.get (sec, "entry_font",   "Courier"), cfg.get (sec, "entry_font_size",    14), "normal")
 button_font   = (cfg.get (sec, "button_font",  "Courier"), cfg.get (sec, "button_font_size",   14), "normal")
 
 headline_bg = cfg.get (sec, "headline_bg", "gray")
-button_bg   = cfg.get (sec, "button_bg", "gray")
-label_bg    = cfg.get (sec, "text_bg",   "gray")
-page_bg     = cfg.get (sec, "page_bg",   "gray")
-entry_bg    = cfg.get (sec, "entry_bg",  "gray")
+button_bg   = cfg.get (sec, "button_bg",   "gray")
+label_bg    = cfg.get (sec, "text_bg",     "gray")
+page_bg     = cfg.get (sec, "page_bg",     "gray")
+entry_bg    = cfg.get (sec, "entry_bg",    "gray")
 
 
 # This function might be moved into class database.Database
@@ -56,6 +54,7 @@ def check (db, de, en):
         return id
 
 def check_word (word):
+        """Check user input and remove whitespace."""
         res = word.strip()
         if (res == ""):
             res = None
@@ -70,17 +69,21 @@ def label_say (label, mess):
 
 
 class Page:
+    """Provide a page to add a card to database."""
     db           = None
     page_addcard = None
     page_main    = None
     root         = None
 
-    # To frame_main_bottom add a button, that invokes adding a card
-    def __init__ (self, frame_main_bottom, page_main, root, db):
+    def __init__ (self, frame_main_bottom, page_main, button_style, root, db):
+        """Add a button to main page that invokes adding a card."""
         self.db        = db
         self.page_main = page_main
         self.root      = root
-        button_cardadd = Button (frame_main_bottom, text="Add card", command=self.show_page_cmd)
+        button_cardadd = Button (frame_main_bottom,
+                                 text="Add card",
+                                 command=self.show_page_cmd,
+                                 font=button_style[0])
         button_cardadd.pack()
 
     def show_page_cmd (self):
@@ -88,13 +91,13 @@ class Page:
         f = Frame (self.root)
         f.configure (background = page_bg, padx=50, pady=50)
         mess_headline   = Label (f, text="Add a Card",  font=headline_font, bg=headline_bg, padx=20, pady=7)
-        mess_de         = Label (f, text="German",      font=text_font, bg=label_bg, padx=10, pady=5)
-        mess_en         = Label (f, text="English",     font=text_font, bg=label_bg, padx=10, pady=5)
-        mess_desc       = Label (f, text="Description", font=text_font, bg=label_bg, padx=10, pady=5)
-        self.mess_err   = Label (f, text="<>",          font=text_font, bg=label_bg, padx=10, pady=7)
-        self.entry_de   = Entry (f, width=32, font=entry_font, bg=entry_bg)
-        self.entry_en   = Entry (f, width=32, font=entry_font, bg=entry_bg)
-        self.entry_desc = Entry (f, width=72, font=entry_font, bg=entry_bg)
+        mess_de         = Label (f, text="German",      font=text_font,  bg=label_bg, padx=10, pady=5)
+        mess_en         = Label (f, text="English",     font=text_font,  bg=label_bg, padx=10, pady=5)
+        mess_desc       = Label (f, text="Description", font=text_font,  bg=label_bg, padx=10, pady=5)
+        self.mess_err   = Label (f, text="<>",          font=text_font,  bg=label_bg, padx=10, pady=7)
+        self.entry_de   = Entry (f, width=32,           font=entry_font, bg=entry_bg)
+        self.entry_en   = Entry (f, width=32,           font=entry_font, bg=entry_bg)
+        self.entry_desc = Entry (f, width=72,           font=entry_font, bg=entry_bg)
         button_add      = Button (f, text="Add",  command=self.add_word_cmd, font=button_font, bg=button_bg)
         button_back     = Button (f, text="Back", command=self.back_cmd,     font=button_font, bg=button_bg)
 
@@ -164,18 +167,6 @@ class Page:
     def back_event (self, event):
         print ("--- back_event")
         self.back_cmd()
-
-#     def next_tab (self, w):
-#         res = None
-#         if   w == self.entry_de:   res = self.entry_en
-#         elif w == self.entry_en:   res = self.entry_desc
-#         elif w == self.entry_desc: res = self.entry_de
-#         else: res = self.entry_de
-#         print ("--- next_tab")
-#         return res
-
-#     def tab_cmd(self, event):
-#         (self.next_tab (self.root.focus())).focus()
 
 
 # -----------------------------------------------------------------------------

@@ -24,4 +24,6 @@
  - Task: present ppt (Alam)
  - Task: Update Styles (Shivang)
 
+ - Game does not present newly added cards?
+
 
