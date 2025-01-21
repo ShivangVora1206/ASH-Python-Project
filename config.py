@@ -5,10 +5,20 @@ import configparser
 
 
 class Config:
+    """Read configuration file of ASHCards project.
+
+    This class uses Python's 'configparser' module.
+
+
+    File format is 'ini'.
+    """
     file   = None
+    """Configuration file."""
     parser = None
+    """Configuration Parser."""
 
     def __init__(self, file):
+        """ Hallo?<???> Where am i?"""
         self.file = file
         if os.path.exists (self.file):
             self.parser = configparser.ConfigParser()
@@ -22,6 +32,7 @@ class Config:
         else: print ("--- config file not found:", self.file)
 
     def get (self, section, key, default):
+        """Return key form section. A default value is mandatory."""
         res = default
         if self.parser:
             if self.parser.has_section (section):
@@ -32,6 +43,12 @@ class Config:
         return res
 
     def getint (self, section, key, default):
+        """Return key form section. A default value is mandatory.
+
+        Return key as integer, if possible.
+
+        Return key as string, if is is not an integer.
+        """
         res = default
         v = self.get (section, key, default)
         if v:
@@ -40,6 +57,7 @@ class Config:
         return res
 
     def dump (self):
+        """For testing of this module."""
         print ("------------  Config.dump")
         print (self.file)
         if self.parser:
