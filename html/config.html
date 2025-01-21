@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
 <meta name="generator" content="pdoc3 0.11.5">
 <title>config API documentation</title>
-<meta name="description" content="">
+<meta name="description" content="Read configuration of ASHCards project …">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/sanitize.min.css" integrity="sha512-y1dtMcuvtTMJc1yPgEqF0ZjQbhnc/bFhyvIyVNb9Zk5mIGtqVaAB1Ttl28su8AvFMOY0EwRbAe+HCLqj6W7/KA==" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/typography.min.css" integrity="sha512-Y1DYSb995BAfxobCkKepB1BqJJTPrOp3zPL74AWFugHHmmdcvO+C48WLrUOlhGMc0QG7AE3f7gmvvcrmX2fDoA==" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css" crossorigin>
@@ -36,6 +36,15 @@ el.replaceWith(d);
 <h1 class="title">Module <code>config</code></h1>
 </header>
 <section id="section-intro">
+<p>Read configuration of ASHCards project.</p>
+<p>Configuration for this project is available in INI-files and accessed using
+Python's <code>configparser.ConfigParser</code> module.</p>
+<p>This module provides a class <code><a title="config.Config" href="#config.Config">Config</a></code>, who's instance holds a parser pointing
+at projects config file and mainly two methods: one for reading string values
+like font names or window titles and an other one for reading integer values
+like positions or colors.</p>
+<p>For an in detail explanation of INI-files see:
+<a href="https://en.wikipedia.org/wiki/INI_file">https://en.wikipedia.org/wiki/INI_file</a></p>
 </section>
 <section>
 </section>
@@ -56,20 +65,20 @@ el.replaceWith(d);
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Config:
-    &#34;&#34;&#34;Read configuration file of ASHCards project.
+    &#34;&#34;&#34;Enable reading values from ASHCards configuration file.
 
-    This class uses Python&#39;s &#39;configparser&#39; module.
+    Check, if the provided INI-file exists.
 
-
-    File format is &#39;ini&#39;.
+    Instantiate a Parser.
     &#34;&#34;&#34;
+
     file   = None
     &#34;&#34;&#34;Configuration file.&#34;&#34;&#34;
+
     parser = None
     &#34;&#34;&#34;Configuration Parser.&#34;&#34;&#34;
 
     def __init__(self, file):
-        &#34;&#34;&#34; Hallo?&lt;???&gt; Where am i?&#34;&#34;&#34;
         self.file = file
         if os.path.exists (self.file):
             self.parser = configparser.ConfigParser()
@@ -98,7 +107,7 @@ el.replaceWith(d);
 
         Return key as integer, if possible.
 
-        Return key as string, if is is not an integer.
+        Return key as string, if conversion to integer fails.
         &#34;&#34;&#34;
         res = default
         v = self.get (section, key, default)
@@ -108,7 +117,7 @@ el.replaceWith(d);
         return res
 
     def dump (self):
-        &#34;&#34;&#34;For testing of this module.&#34;&#34;&#34;
+        &#34;&#34;&#34;For testing purposes.&#34;&#34;&#34;
         print (&#34;------------  Config.dump&#34;)
         print (self.file)
         if self.parser:
@@ -119,10 +128,9 @@ el.replaceWith(d);
         print (&#34;------------&#34;)
         print ()</code></pre>
 </details>
-<div class="desc"><p>Read configuration file of ASHCards project.</p>
-<p>This class uses Python's 'configparser' module.</p>
-<p>File format is 'ini'.</p>
-<p>Hallo?&lt;???&gt; Where am i?</p></div>
+<div class="desc"><p>Enable reading values from ASHCards configuration file.</p>
+<p>Check, if the provided INI-file exists.</p>
+<p>Instantiate a Parser.</p></div>
 <h3>Class variables</h3>
 <dl>
 <dt id="config.Config.file"><code class="name">var <span class="ident">file</span></code></dt>
@@ -145,7 +153,7 @@ el.replaceWith(d);
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def dump (self):
-    &#34;&#34;&#34;For testing of this module.&#34;&#34;&#34;
+    &#34;&#34;&#34;For testing purposes.&#34;&#34;&#34;
     print (&#34;------------  Config.dump&#34;)
     print (self.file)
     if self.parser:
@@ -156,7 +164,7 @@ el.replaceWith(d);
     print (&#34;------------&#34;)
     print ()</code></pre>
 </details>
-<div class="desc"><p>For testing of this module.</p></div>
+<div class="desc"><p>For testing purposes.</p></div>
 </dd>
 <dt id="config.Config.get"><code class="name flex">
 <span>def <span class="ident">get</span></span>(<span>self, section, key, default)</span>
@@ -192,7 +200,7 @@ el.replaceWith(d);
 
     Return key as integer, if possible.
 
-    Return key as string, if is is not an integer.
+    Return key as string, if conversion to integer fails.
     &#34;&#34;&#34;
     res = default
     v = self.get (section, key, default)
@@ -203,7 +211,7 @@ el.replaceWith(d);
 </details>
 <div class="desc"><p>Return key form section. A default value is mandatory.</p>
 <p>Return key as integer, if possible.</p>
-<p>Return key as string, if is is not an integer.</p></div>
+<p>Return key as string, if conversion to integer fails.</p></div>
 </dd>
 </dl>
 </dd>
