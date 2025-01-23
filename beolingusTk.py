@@ -109,48 +109,58 @@ def halt():
     print ("------------  quit")
     quit()
 
-win = tkinter.Tk()
-win.title (win_title)
-win.geometry (f"{win_width}x{win_height}+{win_xpos}+{win_ypos}")
-win.minsize (width=win_width_min, height=win_height_min)
+# win = tkinter.Tk()
+# win.title (win_title)
+# win.geometry (f"{win_width}x{win_height}+{win_xpos}+{win_ypos}")
+# win.minsize (width=win_width_min, height=win_height_min)
 
-bf = tkinter.Frame(win)
-bf.pack (side="top", fill="x")
-quit_button          = tkinter.Button (bf, text="Quit",   command=halt,        font=button_font)
-go_any_button        = tkinter.Button (bf, text="Any",    command=go_any,      font=button_font)
-go_fiap_button       = tkinter.Button (bf, text="Fiap",   command=go_fiap,     font=button_font)
-go_first_button      = tkinter.Button (bf, text="First",  command=go_first,    font=button_font)
-go_apart_button      = tkinter.Button (bf, text="Apart",  command=go_apart,    font=button_font)
-case_button          = tkinter.Button (bf, text="_case_", command=toggle_case, font=button_font)
-
-
-quit_button.pack (side="left", anchor="n", fill="x")
-case_button.pack (side="left", anchor="n", fill="x")
-
-go_any_button.pack (side="right", anchor="n", fill="x")
-go_apart_button.pack (side="right", anchor="n", fill="x")
-go_first_button.pack (side="right", anchor="n", fill="x")
-go_fiap_button.pack (side="right", anchor="n", fill="x")
-
-word_entry = tkinter.Entry (width=32, font=entry_font)
-set_entry_text (word_entry, word_hist[word_hist_index])
-word_entry.bind ("<Return>", go_on_return)
-word_entry.bind ("<Up>",     entry_up)
-word_entry.bind ("<Down>",   entry_down)
-word_entry.pack(side="top", anchor="w")
-
-text_box = tkinter.scrolledtext.ScrolledText (font=text_box_font)
-text_box.insert  ("insert", "Nothing to say...")
-text_box.pack(fill="both", expand=True)
+# bf = tkinter.Frame(win)
+# bf.pack (side="top", fill="x")
+# quit_button          = tkinter.Button (bf, text="Quit",   command=halt,        font=button_font)
+# go_any_button        = tkinter.Button (bf, text="Any",    command=go_any,      font=button_font)
+# go_fiap_button       = tkinter.Button (bf, text="Fiap",   command=go_fiap,     font=button_font)
+# go_first_button      = tkinter.Button (bf, text="First",  command=go_first,    font=button_font)
+# go_apart_button      = tkinter.Button (bf, text="Apart",  command=go_apart,    font=button_font)
+# case_button          = tkinter.Button (bf, text="_case_", command=toggle_case, font=button_font)
 
 
-def main():
-    print ("============  beolingus-tk")
-    win.mainloop()
-    print ("============  done")
+# quit_button.pack (side="left", anchor="n", fill="x")
+# case_button.pack (side="left", anchor="n", fill="x")
 
-if __name__ == "__main__":
-        main()
+# go_any_button.pack (side="right", anchor="n", fill="x")
+# go_apart_button.pack (side="right", anchor="n", fill="x")
+# go_first_button.pack (side="right", anchor="n", fill="x")
+# go_fiap_button.pack (side="right", anchor="n", fill="x")
+
+# word_entry = tkinter.Entry (width=32, font=entry_font)
+# set_entry_text (word_entry, word_hist[word_hist_index])
+# word_entry.bind ("<Return>", go_on_return)
+# word_entry.bind ("<Up>",     entry_up)
+# word_entry.bind ("<Down>",   entry_down)
+# word_entry.pack(side="top", anchor="w")
+
+# text_box = tkinter.scrolledtext.ScrolledText (font=text_box_font)
+# text_box.insert  ("insert", "Nothing to say...")
+# text_box.pack(fill="both", expand=True)
+
+class UpdateWindow:
+    def __init__ (self, root, frame_main_bottom, button_style, current_word):
+        print ("--- __init__  current_word=", current_word)
+        button_update = tkinter.Button (frame_main_bottom, text="beoli", command=self.update_window, font=button_font)
+        button_update.pack()
+
+
+    def update_window (self):
+        print ("--- update_window")
+
+
+# def main():
+#     print ("============  beolingus-tk")
+#     win.mainloop()
+#     print ("============  done")
+
+# if __name__ == "__main__":
+#         main()
 
 # file END
 
