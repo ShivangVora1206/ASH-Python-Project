@@ -193,7 +193,7 @@ def update_beoli():
     else: word = current_card["German"]
     beoli.update (word)
 
-beoli = beolingusTk.Window (root)
+beoli = beolingusTk.Window()
 button_beoli= Button (frame_main_bottom, text="beoli", command=update_beoli, font=fontM)
 button_beoli.pack()
 

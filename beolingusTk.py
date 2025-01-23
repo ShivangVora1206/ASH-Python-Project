@@ -68,12 +68,10 @@ def set_entry_text (e, text):
 class Window:
     current_word      = None
     ignore_case       = True
-#     root              = None
     win               = None
 
-    def __init__ (self, root):
+    def __init__ (self):
         print ("--- __init__")
-#         self.root = root
 
     def update(self, current_word):
         print ("--- update current_word=", current_word)
@@ -83,7 +81,6 @@ class Window:
         else:
             print ("--- already open")
         set_entry_text (self.word_entry, current_word)
-        w_insert (current_word)
         self.go_first()
 
     def open (self):
