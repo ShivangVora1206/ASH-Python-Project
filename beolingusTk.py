@@ -1,9 +1,11 @@
-# beolingus-tk.py  --  Try to use beolingus.py from tk.
+# beolingus-tk.py  --  Using beolingus.py from tk.
 
 
-# TODO
-# * a lot
-# parse config (ini)
+# TODO make it working (try&test)
+# TODO make it user friendly
+# TODO make it nice
+# TODO clean up the mess
+
 
 import tkinter
 import tkinter.scrolledtext
@@ -30,7 +32,6 @@ text_box_font= ("Times New Roman", 16, "normal")
 dict            = Beolingus()
 word_hist       = ["Anaconda", "Desire", "Netzpython"]
 word_hist_index = 0
-ignore_case     = True
 
 
 def w_next():
@@ -55,112 +56,119 @@ def get_word (entry):
     w_insert (word)
     return word
 
-
 def text_box_say (widget, mess):
     widget.delete ("1.0","end")
     widget.insert ("insert", mess)
-
-
-def go_fiap():
-    word = get_word (word_entry)
-    res = dict.show_query (word, True, True,   True, True, ignore_case)
-    text_box_say (text_box, res)
-
-def go_first():
-    word = get_word (word_entry)
-    res = dict.show_query (word, True, True,   True, False, ignore_case)
-    text_box_say (text_box, res)
-
-def go_apart():
-    word = get_word (word_entry)
-    res = dict.show_query (word, True, True, False, True, ignore_case)
-    text_box_say (text_box, res)
-
-def go_any():
-    word = get_word (word_entry)
-    res = dict.show_query (word, True, True, False, False, ignore_case)
-    text_box_say (text_box, res)
-
-def toggle_case():
-    global ignore_case
-    ignore_case = not ignore_case
-    if ignore_case:
-        case_button["text"] = "_case_"
-    else: case_button["text"] = "+CASE+"
-
-def go_on_return (event):
-    go_any()
 
 def set_entry_text (e, text):
     e.delete (0,"end")
     e.insert (0,text)
 
-def entry_up (event):
-    print ("entry_up")
-    print (w_prev())
-    set_entry_text (word_entry, word_hist[word_hist_index])
 
-def entry_down (event):
-    print ("entry_down")
-    print (w_next())
-    set_entry_text (word_entry, word_hist[word_hist_index])
+class Window:
+    current_word      = None
+    ignore_case       = True
+#     root              = None
+    win               = None
 
-def halt():
-    print ("------------  quit")
-    quit()
+    def __init__ (self, root):
+        print ("--- __init__")
+#         self.root = root
 
-# win = tkinter.Tk()
-# win.title (win_title)
-# win.geometry (f"{win_width}x{win_height}+{win_xpos}+{win_ypos}")
-# win.minsize (width=win_width_min, height=win_height_min)
+    def update(self, current_word):
+        print ("--- update current_word=", current_word)
+        if (self.win == None) or ((self.win != None) and (len (self.win.children) == 0)):
+            print ("--- update open")
+            self.open()
+        else:
+            print ("--- already open")
+        set_entry_text (self.word_entry, current_word)
+        w_insert (current_word)
+        self.go_first()
 
-# bf = tkinter.Frame(win)
-# bf.pack (side="top", fill="x")
-# quit_button          = tkinter.Button (bf, text="Quit",   command=halt,        font=button_font)
-# go_any_button        = tkinter.Button (bf, text="Any",    command=go_any,      font=button_font)
-# go_fiap_button       = tkinter.Button (bf, text="Fiap",   command=go_fiap,     font=button_font)
-# go_first_button      = tkinter.Button (bf, text="First",  command=go_first,    font=button_font)
-# go_apart_button      = tkinter.Button (bf, text="Apart",  command=go_apart,    font=button_font)
-# case_button          = tkinter.Button (bf, text="_case_", command=toggle_case, font=button_font)
+    def open (self):
+        print ("--- open")
+        self.win = tkinter.Toplevel()
+        self.win.title (win_title)
+        self.win.geometry (f"{win_width}x{win_height}+{win_xpos}+{win_ypos}")
+        self.win.minsize (width=win_width_min, height=win_height_min)
 
-
-# quit_button.pack (side="left", anchor="n", fill="x")
-# case_button.pack (side="left", anchor="n", fill="x")
-
-# go_any_button.pack (side="right", anchor="n", fill="x")
-# go_apart_button.pack (side="right", anchor="n", fill="x")
-# go_first_button.pack (side="right", anchor="n", fill="x")
-# go_fiap_button.pack (side="right", anchor="n", fill="x")
-
-# word_entry = tkinter.Entry (width=32, font=entry_font)
-# set_entry_text (word_entry, word_hist[word_hist_index])
-# word_entry.bind ("<Return>", go_on_return)
-# word_entry.bind ("<Up>",     entry_up)
-# word_entry.bind ("<Down>",   entry_down)
-# word_entry.pack(side="top", anchor="w")
-
-# text_box = tkinter.scrolledtext.ScrolledText (font=text_box_font)
-# text_box.insert  ("insert", "Nothing to say...")
-# text_box.pack(fill="both", expand=True)
-
-class UpdateWindow:
-    def __init__ (self, root, frame_main_bottom, button_style, current_word):
-        print ("--- __init__  current_word=", current_word)
-        button_update = tkinter.Button (frame_main_bottom, text="beoli", command=self.update_window, font=button_font)
-        button_update.pack()
+        bf = tkinter.Frame(self.win)
+        bf.pack (side="top", fill="x")
+        self.close_button    = tkinter.Button (bf, text="Close",  command=self.close,       font=button_font)
+        self.go_any_button   = tkinter.Button (bf, text="Any",    command=self.go_any,      font=button_font)
+        self.go_fiap_button  = tkinter.Button (bf, text="Fiap",   command=self.go_fiap,     font=button_font)
+        self.go_first_button = tkinter.Button (bf, text="First",  command=self.go_first,    font=button_font)
+        self.go_apart_button = tkinter.Button (bf, text="Apart",  command=self.go_apart,    font=button_font)
+        self.case_button     = tkinter.Button (bf, text="_case_", command=self.toggle_case, font=button_font)
 
 
-    def update_window (self):
-        print ("--- update_window")
+        self.close_button.pack (side="left", anchor="n", fill="x")
+        self.case_button.pack (side="left", anchor="n", fill="x")
+
+        self.go_any_button.pack (side="right", anchor="n", fill="x")
+        self.go_apart_button.pack (side="right", anchor="n", fill="x")
+        self.go_first_button.pack (side="right", anchor="n", fill="x")
+        self.go_fiap_button.pack (side="right", anchor="n", fill="x")
+
+        self.word_entry = tkinter.Entry (self.win, width=32, font=entry_font)
+        set_entry_text (self.word_entry, word_hist[word_hist_index])
+        self.word_entry.bind ("<Return>", self.go_on_return)
+        self.word_entry.bind ("<Up>",     self.entry_up)
+        self.word_entry.bind ("<Down>",   self.entry_down)
+        self.word_entry.pack(side="top", anchor="w")
+
+        self.text_box = tkinter.scrolledtext.ScrolledText (self.win, font=text_box_font)
+        self.text_box.insert  ("insert", "Nothing to say...")
+        self.text_box.pack(fill="both", expand=True)
+        self.is_open = True
 
 
-# def main():
-#     print ("============  beolingus-tk")
-#     win.mainloop()
-#     print ("============  done")
+    def go_fiap(self):
+        word = get_word (self.word_entry)
+        res = dict.show_query (word, True, True,   True, True, self.ignore_case)
+        text_box_say (self.text_box, res)
 
-# if __name__ == "__main__":
-#         main()
+    def go_first(self):
+        word = get_word (self.word_entry)
+        res = dict.show_query (word, True, True,   True, False, self.ignore_case)
+        text_box_say (self.text_box, res)
 
-# file END
+    def go_apart (self):
+        word = get_word (self.word_entry)
+        res = dict.show_query (word, True, True, False, True, self.ignore_case)
+        text_box_say (self.text_box, res)
+
+    def go_any (self):
+        word = get_word (self.word_entry)
+        res = dict.show_query (word, True, True, False, False, self.ignore_case)
+        text_box_say (self.text_box, res)
+
+    def toggle_case (self):
+        self.ignore_case = not self.ignore_case
+        if self.ignore_case:
+            self.case_button["text"] = "_case_"
+        else: self.case_button["text"] = "+CASE+"
+
+    def go_on_return (self, event):
+        self.go_any()
+
+    def entry_up (self, event):
+        print ("entry_up")
+        print (w_prev())
+        set_entry_text (self.word_entry, word_hist[word_hist_index])
+
+    def entry_down (self, event):
+        print ("entry_down")
+        print (w_next())
+        set_entry_text (self.word_entry, word_hist[word_hist_index])
+
+    def close (self):
+        if (self.win != None) and (self.win.state() == 'normal'):
+            self.win.destroy()
+            print ("--- close")
+        else: print ("--- no win open")
+
+
+# :file: END
 

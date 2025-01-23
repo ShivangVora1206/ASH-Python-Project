@@ -179,13 +179,24 @@ canvas_game.create_window(250, 350, window=button_back)
 # canvas_game.bind("<Configure>", update_image_scale)
 canvas_game.bind("<Configure>", update_canvas_binding)
 
+
+
 # Integrate beolingus, which does a window of it's own.
 # Add a button somewhere here
 # that opens a new window with beolingus info.
 # Find a way to update info in beolingus window.
-button_style = (fontM, )
-current_word = "Python"
-beolingusTk.UpdateWindow (root, frame_main_bottom, button_style, current_word)
+
+def update_beoli():
+    global current_card
+    if current_card == None:
+        word = "Python"
+    else: word = current_card["German"]
+    beoli.update (word)
+
+beoli = beolingusTk.Window (root)
+button_beoli= Button (frame_main_bottom, text="beoli", command=update_beoli, font=fontM)
+button_beoli.pack()
+
 
 
 # Initial Setup
