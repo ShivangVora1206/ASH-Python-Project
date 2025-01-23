@@ -2,7 +2,7 @@
 
 set -o posix
 
-FILES='config.py database.py'
+FILES='config.py database.py beolingus.py beolingus-tk.py'
 
 case $1 in
     gen)  pdoc --force --html $FILES ;;
