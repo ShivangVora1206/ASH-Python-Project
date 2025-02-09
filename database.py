@@ -21,13 +21,14 @@ class Database:
         except Exception as e:
             print(e)
     
-    def add_word(self, German, English, desc=None):
+    def add_word(self, German, English, level, desc=None):
         if self.data:
             self.data.append({
                 "id": len(self.data),  # This is a potential issue if cards are removed!
                 "German": German,
                 "English": English,
-                "score": 0
+                "score": 0,
+                "level": level
             })
         else:
             raise Exception("Data is empty")
