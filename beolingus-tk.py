@@ -13,19 +13,21 @@ import config
 
 cfg = config.Config ("config.ini")
 
-win_title      = cfg.get    ("beodict", "win_title", "<TITLE>")
+sec = "beodict"
+win_title      = cfg.get    (sec, "win_title", "<TITLE>")
+win_width      = cfg.getint (sec, "win_width",      600)
+win_height     = cfg.getint (sec, "win_height",     300)
+win_xpos       = cfg.getint (sec, "win_xpos",       200)
+win_ypos       = cfg.getint (sec, "win_ypos",       200)
+win_width_min  = cfg.getint (sec, "win_width_min",  600)
+win_height_min = cfg.getint (sec, "win_height_min", 150)
 
-win_width      = cfg.getint ("beodict", "win_width",      600)
-win_height     = cfg.getint ("beodict", "win_height",     300)
-win_xpos       = cfg.getint ("beodict", "win_xpos",       200)
-win_ypos       = cfg.getint ("beodict", "win_ypos",       200)
-win_width_min  = cfg.getint ("beodict", "win_width_min",  600)
-win_height_min = cfg.getint ("beodict", "win_height_min", 150)
+sec = "default"
+entry_font    = (cfg.get (sec, "entry_font",   "Courier"), cfg.get (sec, "entry_font_size",    14), "normal")
+button_font   = (cfg.get (sec, "button_font",  "Courier"), cfg.get (sec, "button_font_size",   14), "normal")
+message_font  = (cfg.get (sec, "text_font",    "Courier"), cfg.get (sec, "headline_font_size", 14), "normal")
+text_box_font = (cfg.get (sec, "text_font",    "Courier"), cfg.get (sec, "text_font_size",     14), "normal")
 
-entry_font   = ("Courier",         18, "normal")
-button_font  = ("Arial",           18, "bold")
-message_font = ("Times New Roman", 16, "normal")
-text_box_font= ("Times New Roman", 16, "normal")
 
 dict            = Beolingus()
 word_hist       = ["Anaconda", "Desire", "Netzpython"]

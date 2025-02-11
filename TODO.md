@@ -25,4 +25,6 @@
  - Task: Update Styles (Shivang)
  - Task: Add a test to determine user level (Shivang)
 
+ - Game does not present newly added cards?
+
 

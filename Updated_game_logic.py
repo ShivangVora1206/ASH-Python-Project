@@ -5,6 +5,8 @@ import random
 from PIL import Image, ImageTk  # For handling images
 from database import Database
 
+import cardadd
+
 db = Database("temp_dataset.json")  # Use your dataset here
 
 # Initialize Tkinter
@@ -176,6 +178,15 @@ canvas_game.create_window(250, 350, window=button_back)
 # Update button positions when the window is resized
 # canvas_game.bind("<Configure>", update_image_scale)
 canvas_game.bind("<Configure>", update_canvas_binding)
+
+
+# Cardadd Page
+# Add a button to frame_main_bottom,
+# that temporarily switches page_main to page_cardadd, providing functionality to add cards to db.
+# Saves db after each add.
+button_style = (fontM,)
+cardadd.Page (frame_main_bottom, page_main, button_style, root, db)
+
 
 # Initial Setup
 show_main_menu()
