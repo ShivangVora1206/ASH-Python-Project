@@ -5,6 +5,8 @@ import random
 from PIL import Image, ImageTk  # For handling images
 from database import Database
 
+import beolingusTk
+
 db = Database("temp_dataset.json")  # Use your dataset here
 
 # Initialize Tkinter
@@ -176,6 +178,26 @@ canvas_game.create_window(250, 350, window=button_back)
 # Update button positions when the window is resized
 # canvas_game.bind("<Configure>", update_image_scale)
 canvas_game.bind("<Configure>", update_canvas_binding)
+
+
+
+# Integrate beolingus, which does a window of it's own.
+# Add a button somewhere here
+# that opens a new window with beolingus info.
+# Find a way to update info in beolingus window.
+
+def update_beoli():
+    global current_card
+    if current_card == None:
+        word = "Python"
+    else: word = current_card["German"]
+    beoli.update (word)
+
+beoli = beolingusTk.Window()
+button_beoli= Button (frame_main_bottom, text="beoli", command=update_beoli, font=fontM)
+button_beoli.pack()
+
+
 
 # Initial Setup
 show_main_menu()
