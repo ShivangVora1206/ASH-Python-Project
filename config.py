@@ -1,12 +1,36 @@
 # main.py  --  Using ini files.
 
+"""Read configuration of ASHCards project.
+
+Configuration for this project is available in INI-files and accessed using
+Python's `configparser.ConfigParser` module.
+
+This module provides a class `Config`, who's instance holds a parser pointing
+at projects config file and mainly two methods: one for reading string values
+like font names or window titles and an other one for reading integer values
+like positions or colors.
+
+For an in detail explanation of INI-files see:
+https://en.wikipedia.org/wiki/INI_file
+"""
+
 import os
 import configparser
 
 
 class Config:
+    """Enable reading values from ASHCards configuration file.
+
+    Check, if the provided INI-file exists.
+
+    Instantiate a Parser.
+    """
+
     file   = None
+    """Configuration file."""
+
     parser = None
+    """Configuration Parser."""
 
     def __init__(self, file):
         self.file = file
@@ -22,6 +46,7 @@ class Config:
         else: print ("--- config file not found:", self.file)
 
     def get (self, section, key, default):
+        """Return key form section. A default value is mandatory."""
         res = default
         if self.parser:
             if self.parser.has_section (section):
@@ -32,6 +57,12 @@ class Config:
         return res
 
     def getint (self, section, key, default):
+        """Return key form section. A default value is mandatory.
+
+        Return key as integer, if possible.
+
+        Return key as string, if conversion to integer fails.
+        """
         res = default
         v = self.get (section, key, default)
         if v:
@@ -40,6 +71,7 @@ class Config:
         return res
 
     def dump (self):
+        """For testing purposes."""
         print ("------------  Config.dump")
         print (self.file)
         if self.parser:
