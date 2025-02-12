@@ -20,18 +20,28 @@ root.title(c.get('ASHConfig', 'root_title'))
 root.geometry(c.get('ASHConfig', 'root_geometry'))  # Window size is fixed to 500x400
 root.minsize(c.getint('ASHConfig', 'root_min_x'), c.getint('ASHConfig', 'root_min_y'))
 
-custom_font = Font(family=c.get('ASHConfig', 'font_family'))
-fontL = tkFont.Font(family=c.get('ASHConfig', 'font_family'), size=c.getint('ASHConfig', 'font_size_L'))
-fontM = tkFont.Font(family=c.get('ASHConfig', 'font_family'), size=c.getint('ASHConfig', 'font_size_M'))
+custom_font1 = Font(file="Montserrat-Regular.ttf", family="Montserrat")
+custom_font2 = Font(file="AlteHaasGroteskBold.ttf", family="Alte Haas Grotesk Bold")
+
+fontL = tkFont.Font(family="Alte Haas Grotesk Bold", size=24)
+fontM = tkFont.Font(family="Montserrat", size=15)
 
 style = ttk.Style()
 style.configure("Rounded.TButton", 
+                borderwidth=2, 
+                relief="solid", 
+                padding=5,
+                background="#1ecbe1", 
+                font=('Montserrat', 15),
+                foreground="black")
+
+style.configure("Custom.TButton", 
                 borderwidth=1, 
                 relief="solid", 
                 padding=10,
-                background="#cc0000", 
-                font=(fontM, 12),
-                foreground="black",
+                background="#c637c8", 
+                font=('Montserrat', 15),
+                foreground="black"
                 )
 
 # Load the background image
@@ -128,12 +138,16 @@ def update_canvas_binding(event):
 
     if feedback_label:
         # print("feedback label ->", feedback_label)
-        canvas_game.create_window(canvas_width * 0.50, canvas_height * 0.80, window=feedback_label)
+        canvas_game.create_window(canvas_width * 0.50, canvas_height * 0.75, window=feedback_label)
 
-    canvas_game.create_window(canvas_width * 0.42, canvas_height * 0.85, window=button_back)
-    canvas_game.create_window(canvas_width * 0.47, canvas_height * 0.85, window=button_flip)
-    canvas_game.create_window(canvas_width * 0.52, canvas_height * 0.85, window=button_next)
-    canvas_game.create_window(canvas_width * 0.57, canvas_height * 0.85, window=button_more_info)
+    canvas_game.create_window(canvas_width * 0.22, canvas_height * 0.85, window=button_back)
+    canvas_game.create_window(canvas_width * 0.42, canvas_height * 0.85, window=button_flip)
+    canvas_game.create_window(canvas_width * 0.62, canvas_height * 0.85, window=button_next)
+    canvas_game.create_window(canvas_width * 0.82, canvas_height * 0.85, window=button_more_info)
+
+def update_more_info_binding(event):
+    # frame_more_info.config(width=page_width, height=page_height)
+    more_info_content_label.config(wraplength=root.winfo_width()-20)
 
 def load_next_card():
     global current_card, options, feedback_label, card_label
@@ -197,16 +211,16 @@ def check_answer(selected_option):
     global feedback_label
     if feedback_label:
         feedback_label.destroy()
-    feedback_label = Label(canvas_game, text="", font=fontM, fg='red', bg="#5c0001")
+    feedback_label = Label(canvas_game, text="", font=fontM, fg='red', bg="#5c0001", wraplength=400)
     if selected_option == current_card['English']:  # Check against the correct answer (English meaning)
         
         feedback_label.config(text="Congratulations, Correct Answer", fg="green", bg="#ffffff")
-        canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.80, window=feedback_label)
+        canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
 
         db.update_score(current_card['id'], score=1)  # Increment score by 1 for correct answer
     else:
         feedback_label.config(text="Wrong Answer. Try Again!", fg="red", bg="#ffffff")
-        canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.80, window=feedback_label)
+        canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
         db.update_score(current_card['id'], score=-1)  # Decrement score by 1 for wrong answer
     button_next.config(state=NORMAL)
     # Delay before loading the next card
@@ -218,17 +232,17 @@ frame_main_top.pack(expand=True, fill='both', side='top')
 frame_main_bottom = Frame(page_main, pady=20)
 frame_main_bottom.pack(expand=True, fill='both', side='bottom')
 
-label_main = Label(frame_main_top, text="ASH Cards", font=fontL, fg='blue', bg='white')
+label_main = Label(frame_main_top, text="ASH Cards", font=fontL, fg='#1ecbe1', bg='white', width=20, height=5)
 label_main.pack(expand=True, anchor='center')
 
 button_start = ttk.Button(frame_main_bottom, text="Start Game",  command=start_game, style="Rounded.TButton")
 button_start.pack(expand=True, anchor='center')
 
-button_exit = Button(frame_main_bottom, text="Exit", font=fontM, command=root.quit)
+button_exit = ttk.Button(frame_main_bottom, text="Exit", command=root.quit, style="Rounded.TButton")
 button_exit.pack(expand=True, anchor='center')
 
 # Game Page
-canvas_game = Canvas(page_game, width=1800, height=1200)
+canvas_game = Canvas(page_game, width=c.getint("ASHConfig", "root_x"), height=c.getint("ASHConfig", "root_y"))
 canvas_game.pack(fill="both", expand=True)
 
 # Add the background image to the canvas
@@ -238,28 +252,28 @@ canvas_image = canvas_game.create_image(0, 0, anchor=NW, image=bg_image_tk)
 # word_label = Label(canvas_game, text="", font=fontL, fg='black', bg="#ffffff")
 # canvas_game.create_window(250, 90, window=word_label)
 
-option_buttons = [Button(canvas_game, text="", font=fontM, bg="#ffffff") for _ in range(4)]
+option_buttons = [ttk.Button(canvas_game, text="", width=20, style="Custom.TButton") for _ in range(4)]
 for idx, btn in enumerate(option_buttons):
     canvas_game.create_window(250, 150 + idx* 40, window=btn)
 
 # canvas_game.create_window(250, 310, window=feedback_label)
 
-button_back = Button(canvas_game, text="Exit", font=fontM, command=show_main_menu, bg="#ffffff")
+button_back = ttk.Button(canvas_game, text="Exit", command=show_main_menu, style="Rounded.TButton")
 canvas_game.create_window(250, 350, window=button_back)
 
-button_flip = Button(canvas_game, text="Flip", font=fontM, command=card_label_toggle, bg="#ffffff")
+button_flip = ttk.Button(canvas_game, text="Flip", command=card_label_toggle, style="Rounded.TButton")
 canvas_game.create_window(250, 390, window=button_flip)
 
-button_next = Button(canvas_game, text="Next", font=fontM, state=DISABLED, command=load_next_card, bg="#ffffff")
+button_next = ttk.Button(canvas_game, text="Next", state=DISABLED, command=load_next_card, style="Rounded.TButton")
 canvas_game.create_window(250, 430, window=button_next)
 
-button_more_info = Button(canvas_game, text="More", font=fontM, command=show_more_info, bg="#ffffff")
+button_more_info = ttk.Button(canvas_game, text="More", command=show_more_info, style="Rounded.TButton")
 canvas_game.create_window(250, 470, window=button_more_info)
 
 
 # card_label = Label(canvas_game, text="Flipped!", font=fontM, fg='black', bg='yellow')
 # canvas_game.create_window(250, 430, window=card_label)
-card_label_frame = Frame(canvas_game, bg='white', padx=40, pady=40)
+card_label_frame = Frame(canvas_game, bg='white', padx=40, pady=40, borderwidth=2, relief="solid")
 card_label = Label(card_label_frame, text="", font=fontL, fg='black')
 card_label.pack(expand=True)
 
@@ -277,16 +291,16 @@ frame_more_info.pack(expand=True)
 more_info_german_label = Label(frame_more_info, text="", font=fontL, fg='black')
 more_info_german_label.pack(expand=True)
 
-more_info_content_label = Label(frame_more_info, text="", font=fontM, fg='black')
+more_info_content_label = Label(frame_more_info, text="", font=fontM, fg='black', wraplength=900)
 more_info_content_label.pack(expand=True)
-more_info_back_button = Button(frame_more_info, text="Back", font=fontM, command=lambda: start_game(True), bg="#ffffff")
+more_info_back_button = ttk.Button(frame_more_info, text="Back", command=lambda: start_game(True), style="Rounded.TButton")
 more_info_back_button.pack(expand=True)
 
 # canvas_game.create_window(250, 470, window=more_info_back_button)
 
 
 canvas_game.bind("<Configure>", update_canvas_binding)
-
+page_more_info.bind("<Configure>", update_more_info_binding)
 # Initial Setup
 show_main_menu()
 # update_button_positions(None)
