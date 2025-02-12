@@ -5,22 +5,24 @@ import random
 from PIL import Image, ImageTk  # For handling images
 from database import Database
 from beolingus import Beolingus
+import configparser
 
-
-db = Database("temp_dataset.json")  # Use your dataset here
+c = configparser.ConfigParser()
+c.read_file(open('config.ini'))
+db = Database(c.get("ASHConfig", "db_path"))  # Use your dataset here
 b = Beolingus()
 print("check ->")
 b.check()
 
 # Initialize Tkinter
 root = Tk()
-root.title("Anki Flashcards")
-root.geometry("1280x720")  # Window size is fixed to 500x400
-root.minsize(200, 150)
+root.title(c.get('ASHConfig', 'root_title'))
+root.geometry(c.get('ASHConfig', 'root_geometry'))  # Window size is fixed to 500x400
+root.minsize(c.getint('ASHConfig', 'root_min_x'), c.getint('ASHConfig', 'root_min_y'))
 
-custom_font = Font(family="Times")
-fontL = tkFont.Font(family="Times", size=20)
-fontM = tkFont.Font(family="Times", size=15)
+custom_font = Font(family=c.get('ASHConfig', 'font_family'))
+fontL = tkFont.Font(family=c.get('ASHConfig', 'font_family'), size=c.getint('ASHConfig', 'font_size_L'))
+fontM = tkFont.Font(family=c.get('ASHConfig', 'font_family'), size=c.getint('ASHConfig', 'font_size_M'))
 
 style = ttk.Style()
 style.configure("Rounded.TButton", 
@@ -33,9 +35,9 @@ style.configure("Rounded.TButton",
                 )
 
 # Load the background image
-background_image_path = r"Final_Card_Font.jpg"
+background_image_path = c.get('ASHConfig', 'background_image_path')
 background_image = Image.open(background_image_path)
-background_image = background_image.resize((1280, 720))  # Resize to fit the window
+background_image = background_image.resize((c.getint("ASHConfig", "root_x"), c.getint("ASHConfig", "root_y")))  # Resize to fit the window
 bg_image_tk = ImageTk.PhotoImage(background_image)
 
 canvas_image = None
@@ -59,6 +61,8 @@ def show_main_menu():
     page_main.pack(expand=True)
 
 def start_game(back=False):
+    global card_label_toggle_state
+    card_label_toggle_state = False
     page_main.pack_forget()
     page_more_info.pack_forget()
     page_game.pack(expand=True)
@@ -106,6 +110,12 @@ def update_canvas_binding(event):
     canvas_width = event.width
     canvas_height = event.height
 
+    # Resize the image to fit the canvas
+    bg_image_resized = background_image.resize((canvas_width, canvas_height))
+    bg_image_tk = ImageTk.PhotoImage(bg_image_resized)
+    canvas_game.create_image(0, 0, anchor=NW, image=bg_image_tk)
+    canvas_image = bg_image_tk
+
     canvas_game.create_window(canvas_width * 0.35, canvas_height * 0.45, window=option_buttons[0])
     canvas_game.create_window(canvas_width * 0.65, canvas_height * 0.45, window=option_buttons[1])
     canvas_game.create_window(canvas_width * 0.35, canvas_height * 0.55, window=option_buttons[2])
@@ -117,22 +127,20 @@ def update_canvas_binding(event):
     #     canvas_game.create_window(canvas_width * 0.50, canvas_height * 0.50, window=card_label_frame)
 
     if feedback_label:
+        # print("feedback label ->", feedback_label)
         canvas_game.create_window(canvas_width * 0.50, canvas_height * 0.80, window=feedback_label)
+
     canvas_game.create_window(canvas_width * 0.42, canvas_height * 0.85, window=button_back)
     canvas_game.create_window(canvas_width * 0.47, canvas_height * 0.85, window=button_flip)
     canvas_game.create_window(canvas_width * 0.52, canvas_height * 0.85, window=button_next)
     canvas_game.create_window(canvas_width * 0.57, canvas_height * 0.85, window=button_more_info)
 
-    # Resize the image to fit the canvas
-    bg_image_resized = background_image.resize((canvas_width, canvas_height))
-    bg_image_tk = ImageTk.PhotoImage(bg_image_resized)
-    canvas_game.create_image(0, 0, anchor=NW, image=bg_image_tk)
-    canvas_image = bg_image_tk
-
 def load_next_card():
     global current_card, options, feedback_label, card_label
     if feedback_label:
         feedback_label.destroy()
+        feedback_label = None
+        # print("feedback label destroyed ->", feedback_label)
     if button_next:
         button_next.config(state=DISABLED)
     card_data = db.fetch_random_card()  # Fetch a random card from the database
@@ -159,7 +167,7 @@ def load_next_card():
         option_buttons[idx].config(text=option, command=lambda opt=option: check_answer(opt))
 
 def load_more_info(card):
-    print("card", card)
+    # print("card", card)
     if card:
         word = card['German']
         return b.show_query(word, de=True, en=True, first=True, apart=True, ignorecase=True)
@@ -210,7 +218,7 @@ frame_main_top.pack(expand=True, fill='both', side='top')
 frame_main_bottom = Frame(page_main, pady=20)
 frame_main_bottom.pack(expand=True, fill='both', side='bottom')
 
-label_main = Label(frame_main_top, text="Anki Flashcards", font=fontL, fg='blue', bg='white')
+label_main = Label(frame_main_top, text="ASH Cards", font=fontL, fg='blue', bg='white')
 label_main.pack(expand=True, anchor='center')
 
 button_start = ttk.Button(frame_main_bottom, text="Start Game",  command=start_game, style="Rounded.TButton")
