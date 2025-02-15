@@ -105,3 +105,15 @@ class Database:
             return random.choice(self.data)['English']
         else:
             return None
+    
+    def fetch_all_words_by_level(self, level):
+        if self.data:
+            return [word for word in self.data if word['level'] == level]
+        else:
+            raise Exception("Data is empty")
+
+    def fetch_random_by_level(self, level, limit=1):
+        output = []
+        for i in limit:
+            output.append(random.choice(self.fetch_all_words_by_level(level)))
+        return output
