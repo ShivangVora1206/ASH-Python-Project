@@ -15,12 +15,14 @@ class Database:
             print(e)
     
     def save(self):
+        print("Saving data to file...")
         try:
             with open(self.filename, 'w') as file:
                 json.dump(self.data, file)
         except Exception as e:
             print(e)
     
+
     def add_word(self, German, English, level, desc=None):
         if self.data:
             self.data.append({
@@ -30,6 +32,7 @@ class Database:
                 "score": 0,
                 "level": level
             })
+            self.save()
         else:
             raise Exception("Data is empty")
 
@@ -37,7 +40,9 @@ class Database:
         if self.data:
             for word in self.data:
                 if word['id'] == word_id:
+                    print(f"Removing word: {word['German']} ({word['English']})")
                     self.data.remove(word)
+                    self.save()
                     break
         else:
             raise Exception("Data is empty")

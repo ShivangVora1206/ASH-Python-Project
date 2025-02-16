@@ -55,6 +55,8 @@ canvas_image = None
 page_main = Frame(root)
 page_game = Frame(root)
 page_more_info = Frame(root)
+page_add_card = Frame(root)
+page_remove_card = Frame(root)
 # Current card and answer variables
 current_card = None
 options = []
@@ -68,6 +70,8 @@ feedback_label = None
 def show_main_menu():
     page_game.pack_forget()
     page_more_info.pack_forget()
+    page_add_card.pack_forget()
+    page_remove_card.pack_forget()
     page_main.pack(expand=True)
 
 def start_game(back=False):
@@ -86,6 +90,13 @@ def show_more_info():
     more_info_german_label.config(text=current_card['German'])
     more_info_content_label.config(text=load_more_info(current_card))
 
+def show_add_card():
+    page_main.pack_forget()
+    page_add_card.pack(expand=True)
+
+def show_remove_card():
+    page_main.pack_forget()
+    page_remove_card.pack(expand=True)
 
 # def update_button_positions(event):
 #     # Get the current size of the canvas
@@ -238,6 +249,12 @@ label_main.pack(expand=True, anchor='center')
 button_start = ttk.Button(frame_main_bottom, text="Start Game",  command=start_game, style="Rounded.TButton")
 button_start.pack(expand=True, anchor='center')
 
+button_add_card = ttk.Button(frame_main_bottom, text="Add Card", command=show_add_card, style="Rounded.TButton")
+button_add_card.pack(expand=True, anchor='center')
+
+button_remove_card = ttk.Button(frame_main_bottom, text="Remove Card", command=show_remove_card, style="Rounded.TButton")
+button_remove_card.pack(expand=True, anchor='center')       
+
 button_exit = ttk.Button(frame_main_bottom, text="Exit", command=root.quit, style="Rounded.TButton")
 button_exit.pack(expand=True, anchor='center')
 
@@ -296,8 +313,62 @@ more_info_content_label.pack(expand=True)
 more_info_back_button = ttk.Button(frame_more_info, text="Back", command=lambda: start_game(True), style="Rounded.TButton")
 more_info_back_button.pack(expand=True)
 
-# canvas_game.create_window(250, 470, window=more_info_back_button)
+# Add Card Page
+page_add_card_frame = Frame(page_add_card, bg='white', padx=10, pady=10)
+page_add_card_frame.pack(expand=True)
 
+page_add_card_label_german = Label(page_add_card_frame, text="Enter German word:", font=fontL, fg='black')
+page_add_card_label_german.pack(expand=True)
+page_add_card_label_english = Label(page_add_card_frame, text="Enter English word:", font=fontL, fg='black')
+page_add_card_label_english.pack(expand=True)
+page_add_card_label_level = Label(page_add_card_frame, text="Enter CEFR Level:", font=fontL, fg='black')
+page_add_card_label_level.pack(expand=True)
+
+page_add_card_entry_german = Entry(page_add_card_frame, font=fontM, width=30)
+page_add_card_entry_german.pack(expand=True)
+page_add_card_entry_english = Entry(page_add_card_frame, font=fontM, width=30)
+page_add_card_entry_english.pack(expand=True)
+page_add_card_entry_level = Entry(page_add_card_frame, font=fontM, width=30)
+page_add_card_entry_level.pack(expand=True)
+
+def submit_add_card():
+    new_card_text_german = page_add_card_entry_german.get()
+    new_card_text_english = page_add_card_entry_english.get()
+    new_card_text_level = page_add_card_entry_level.get()
+    print(f"New card german: {new_card_text_german}, english: {new_card_text_english}, level: {new_card_text_level}")
+    db.add_word(new_card_text_german, new_card_text_english, new_card_text_level)
+    page_add_card_entry_german.delete(0, END)
+    page_add_card_entry_english.delete(0, END)
+    page_add_card_entry_level.delete(0, END)
+
+page_add_card_submit_button = ttk.Button(page_add_card_frame, text="Submit", command=submit_add_card, style="Rounded.TButton")
+page_add_card_submit_button.pack(expand=True)
+page_add_card_back_button = ttk.Button(page_add_card_frame, text="Back", command=show_main_menu, style="Rounded.TButton")
+page_add_card_back_button.pack(expand=True)
+
+
+# Remove Card Page
+
+page_remove_card_frame = Frame(page_remove_card, bg='white', padx=10, pady=10)
+page_remove_card_frame.pack(expand=True)
+
+page_remove_card_label = Label(page_remove_card_frame, text="Enter card id to remove:", font=fontL, fg='black')
+page_remove_card_label.pack(expand=True)
+
+page_remove_card_entry = Entry(page_remove_card_frame, font=fontM, width=30)
+page_remove_card_entry.pack(expand=True)
+
+def submit_remove_card():
+    remove_card_text = page_remove_card_entry.get()
+    # Add logic to handle the removal of the card
+    print(f"Card to remove: {remove_card_text}")
+    db.remove_word(int(remove_card_text))
+    page_remove_card_entry.delete(0, END)  # Clear the entry field after submission
+
+page_remove_card_submit_button = ttk.Button(page_remove_card_frame, text="Submit", command=submit_remove_card, style="Rounded.TButton")
+page_remove_card_submit_button.pack(expand=True)
+page_remove_card_back_button = ttk.Button(page_remove_card_frame, text="Back", command=show_main_menu, style="Rounded.TButton")
+page_remove_card_back_button.pack(expand=True)
 
 canvas_game.bind("<Configure>", update_canvas_binding)
 page_more_info.bind("<Configure>", update_more_info_binding)
