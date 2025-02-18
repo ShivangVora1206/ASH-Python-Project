@@ -65,7 +65,11 @@ card_label_toggle_state = False
 card_label_frame = None
 card_label = None
 feedback_label = None
-# Functions to handle the game logic and navigation
+user_level_label = None
+threshold = c.getint("ASHConfig", "threshold")
+game_modes = ["Default", "Level A1", "Level A2", "Level B1", "Level B2", "Level C1", "Level C2", "Limited"]
+selected_game_mode = game_modes[0]
+selected_game_mode_var = StringVar(value=selected_game_mode)
 # Functions to handle the game logic and navigation
 def show_main_menu():
     page_game.pack_forget()
@@ -75,7 +79,10 @@ def show_main_menu():
     page_main.pack(expand=True)
 
 def start_game(back=False):
-    global card_label_toggle_state
+    global card_label_toggle_state, selected_game_mode, current_card
+    selected_game_mode = selected_game_mode_var.get()
+    db.set_game_mode(selected_game_mode)
+    current_card = None
     card_label_toggle_state = False
     page_main.pack_forget()
     page_more_info.pack_forget()
@@ -137,10 +144,10 @@ def update_canvas_binding(event):
     canvas_game.create_image(0, 0, anchor=NW, image=bg_image_tk)
     canvas_image = bg_image_tk
 
-    canvas_game.create_window(canvas_width * 0.35, canvas_height * 0.45, window=option_buttons[0])
-    canvas_game.create_window(canvas_width * 0.65, canvas_height * 0.45, window=option_buttons[1])
-    canvas_game.create_window(canvas_width * 0.35, canvas_height * 0.55, window=option_buttons[2])
-    canvas_game.create_window(canvas_width * 0.65, canvas_height * 0.55, window=option_buttons[3])
+    canvas_game.create_window(canvas_width * 0.30, canvas_height * 0.45, window=option_buttons[0])
+    canvas_game.create_window(canvas_width * 0.70, canvas_height * 0.45, window=option_buttons[1])
+    canvas_game.create_window(canvas_width * 0.30, canvas_height * 0.55, window=option_buttons[2])
+    canvas_game.create_window(canvas_width * 0.70, canvas_height * 0.55, window=option_buttons[3])
 
     canvas_game.create_window(canvas_width * 0.50, canvas_height * 0.25, window=card_label_frame)
 
@@ -150,6 +157,9 @@ def update_canvas_binding(event):
     if feedback_label:
         # print("feedback label ->", feedback_label)
         canvas_game.create_window(canvas_width * 0.50, canvas_height * 0.75, window=feedback_label)
+    
+    if user_level_label:
+        canvas_game.create_window(canvas_width * 0.50, canvas_height * 0.65, window=user_level_label)
 
     canvas_game.create_window(canvas_width * 0.22, canvas_height * 0.85, window=button_back)
     canvas_game.create_window(canvas_width * 0.42, canvas_height * 0.85, window=button_flip)
@@ -161,14 +171,30 @@ def update_more_info_binding(event):
     more_info_content_label.config(wraplength=root.winfo_width()-20)
 
 def load_next_card():
-    global current_card, options, feedback_label, card_label
+    global current_card, options, feedback_label, card_label, user_level_label, threshold
     if feedback_label:
         feedback_label.destroy()
         feedback_label = None
+    if user_level_label:
+        user_level_label.destroy()
+        user_level_label = None
         # print("feedback label destroyed ->", feedback_label)
     if button_next:
         button_next.config(state=DISABLED)
-    card_data = db.fetch_random_card()  # Fetch a random card from the database
+    card_data = db.fetch_next_card() # Fetch a random card from the database
+    if not card_data:
+        feedback_label = Label(canvas_game, text="No more cards available!", font=fontM, fg="red", bg="#5c0001")
+        canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
+        return
+    user_level_label = Label(canvas_game, text="", font=fontM, fg='black', bg="#5c0001")
+    if threshold < card_data['score']:
+        user_level_label.config(text="You are doing great with this word!", fg="green")
+    elif threshold-2 <= card_data['score'] <= threshold:
+        user_level_label.config(text="You are learning fast!", fg="orange")
+    else:
+        user_level_label.config(text="This word is still new to you!", fg="red")
+    canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.65, window=user_level_label)
+
     if not card_data:
         feedback_label.config(text="No more cards available!", fg="red")
         return
@@ -185,11 +211,12 @@ def load_next_card():
         if random_option not in options:
             options.append(random_option)
 
+    max_len = max([len(opt) for opt in options])
     random.shuffle(options)
 
     # Update option buttons
     for idx, option in enumerate(options):
-        option_buttons[idx].config(text=option, command=lambda opt=option: check_answer(opt))
+        option_buttons[idx].config(text=option, command=lambda opt=option: check_answer(opt), width=max_len)
 
 def load_more_info(card):
     # print("card", card)
@@ -228,11 +255,11 @@ def check_answer(selected_option):
         feedback_label.config(text="Congratulations, Correct Answer", fg="green", bg="#ffffff")
         canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
 
-        db.update_score(current_card['id'], score=1)  # Increment score by 1 for correct answer
+        db.update_score_in_game_queue(current_card['id'], score=1)  # Increment score by 1 for correct answer
     else:
         feedback_label.config(text="Wrong Answer. Try Again!", fg="red", bg="#ffffff")
         canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
-        db.update_score(current_card['id'], score=-1)  # Decrement score by 1 for wrong answer
+        db.update_score_in_game_queue(current_card['id'], score=-1)  # Decrement score by 1 for wrong answer
     button_next.config(state=NORMAL)
     # Delay before loading the next card
     # root.after(1000, load_next_card)  # 1 second delay before loading the next card
@@ -241,7 +268,10 @@ frame_main_top = Frame(page_main)
 frame_main_top.pack(expand=True, fill='both', side='top')
 
 frame_main_bottom = Frame(page_main, pady=20)
-frame_main_bottom.pack(expand=True, fill='both', side='bottom')
+frame_main_bottom.pack(expand=True, fill='both')
+
+frame_main_middle = Frame(page_main)
+frame_main_middle.pack(expand=True, fill='both', side='bottom')
 
 label_main = Label(frame_main_top, text="ASH Cards", font=fontL, fg='#1ecbe1', bg='white', width=20, height=5)
 label_main.pack(expand=True, anchor='center')
@@ -258,6 +288,17 @@ button_remove_card.pack(expand=True, anchor='center')
 button_exit = ttk.Button(frame_main_bottom, text="Exit", command=root.quit, style="Rounded.TButton")
 button_exit.pack(expand=True, anchor='center')
 
+game_mode_label = Label(frame_main_middle, text="Select Game Mode:", font=fontM, fg='black', bg='white')
+game_mode_label.pack(expand=True, anchor='center')
+
+game_mode_frame = Frame(frame_main_middle, bg='white')
+game_mode_frame.pack(expand=True, anchor='center')
+
+for i, mode in enumerate(game_modes):
+    radio_button = Radiobutton(game_mode_frame, text=mode, variable=selected_game_mode_var, value=mode, font=fontM, fg='black', bg='white')
+    radio_button.grid(column=i//2, row=i%2, sticky=W)
+
+
 # Game Page
 canvas_game = Canvas(page_game, width=c.getint("ASHConfig", "root_x"), height=c.getint("ASHConfig", "root_y"))
 canvas_game.pack(fill="both", expand=True)
@@ -269,7 +310,7 @@ canvas_image = canvas_game.create_image(0, 0, anchor=NW, image=bg_image_tk)
 # word_label = Label(canvas_game, text="", font=fontL, fg='black', bg="#ffffff")
 # canvas_game.create_window(250, 90, window=word_label)
 
-option_buttons = [ttk.Button(canvas_game, text="", width=20, style="Custom.TButton") for _ in range(4)]
+option_buttons = [ttk.Button(canvas_game, text="", style="Custom.TButton") for _ in range(4)]
 for idx, btn in enumerate(option_buttons):
     canvas_game.create_window(250, 150 + idx* 40, window=btn)
 
