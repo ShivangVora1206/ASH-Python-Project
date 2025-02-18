@@ -67,7 +67,7 @@ card_label = None
 feedback_label = None
 user_level_label = None
 threshold = c.getint("ASHConfig", "threshold")
-game_modes = ["Default", "Level A1", "Level A2", "Level B1", "Level B2", "Level C1", "Level C2", "Limited"]
+game_modes = ["Default", "Level A1", "Level A2", "Level B1", "Level B2", "Level C1", "Level C2", "Test"]
 selected_game_mode = game_modes[0]
 selected_game_mode_var = StringVar(value=selected_game_mode)
 # Functions to handle the game logic and navigation
@@ -82,6 +82,10 @@ def start_game(back=False):
     global card_label_toggle_state, selected_game_mode, current_card
     selected_game_mode = selected_game_mode_var.get()
     db.set_game_mode(selected_game_mode)
+    if selected_game_mode == "Test":
+        button_flip.config(state=DISABLED)
+    else:
+        button_flip.config(state=NORMAL)
     current_card = None
     card_label_toggle_state = False
     page_main.pack_forget()
@@ -178,14 +182,20 @@ def load_next_card():
     if user_level_label:
         user_level_label.destroy()
         user_level_label = None
-        # print("feedback label destroyed ->", feedback_label)
     if button_next:
         button_next.config(state=DISABLED)
-    card_data = db.fetch_next_card() # Fetch a random card from the database
-    if not card_data:
+
+    card_data = db.fetch_next_card(selected_game_mode) # Fetch a random card from the database
+    
+    if not card_data and selected_game_mode == "Test":
+        feedback_label = Label(canvas_game, text="Test completed! Check your result!", font=fontM, fg="green", bg="#5c0001")
+        canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
+        return
+    elif not card_data and selected_game_mode != "Test":    
         feedback_label = Label(canvas_game, text="No more cards available!", font=fontM, fg="red", bg="#5c0001")
         canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
         return
+    
     user_level_label = Label(canvas_game, text="", font=fontM, fg='black', bg="#5c0001")
     if threshold < card_data['score']:
         user_level_label.config(text="You are doing great with this word!", fg="green")
@@ -194,10 +204,6 @@ def load_next_card():
     else:
         user_level_label.config(text="This word is still new to you!", fg="red")
     canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.65, window=user_level_label)
-
-    if not card_data:
-        feedback_label.config(text="No more cards available!", fg="red")
-        return
 
     current_card = card_data
     card_label.config(text=current_card['German'])  # Display the German word
@@ -255,11 +261,18 @@ def check_answer(selected_option):
         feedback_label.config(text="Congratulations, Correct Answer", fg="green", bg="#ffffff")
         canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
 
-        db.update_score_in_game_queue(current_card['id'], score=1)  # Increment score by 1 for correct answer
+        db.update_score_in_game_queue(current_card['id'], score=1, game_mode=selected_game_mode)  # Increment score by 1 for correct answer
+    
     else:
         feedback_label.config(text="Wrong Answer. Try Again!", fg="red", bg="#ffffff")
         canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
-        db.update_score_in_game_queue(current_card['id'], score=-1)  # Decrement score by 1 for wrong answer
+        
+        if selected_game_mode == "Test":
+            db.update_score_in_game_queue(current_card['id'], score=0, game_mode=selected_game_mode)  # No decrement in test mode wrong answer
+        else:
+            db.update_score_in_game_queue(current_card['id'], score=-1, game_mode=selected_game_mode)  # Decrement score by 1 for wrong answer
+    
+    
     button_next.config(state=NORMAL)
     # Delay before loading the next card
     # root.after(1000, load_next_card)  # 1 second delay before loading the next card
@@ -319,7 +332,10 @@ for idx, btn in enumerate(option_buttons):
 button_back = ttk.Button(canvas_game, text="Exit", command=show_main_menu, style="Rounded.TButton")
 canvas_game.create_window(250, 350, window=button_back)
 
-button_flip = ttk.Button(canvas_game, text="Flip", command=card_label_toggle, style="Rounded.TButton")
+if selected_game_mode == "Test":
+    button_flip = ttk.Button(canvas_game, text="Flip", command=card_label_toggle, state=DISABLED, style="Rounded.TButton")
+else:
+    button_flip = ttk.Button(canvas_game, text="Flip", command=card_label_toggle, style="Rounded.TButton")
 canvas_game.create_window(250, 390, window=button_flip)
 
 button_next = ttk.Button(canvas_game, text="Next", state=DISABLED, command=load_next_card, style="Rounded.TButton")

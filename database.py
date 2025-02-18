@@ -49,9 +49,14 @@ class Database:
             elif game_mode == "Level C2":
                 self.game_queue = None
                 self.game_queue = sorted([word for word in self.data if word['level'] == "C2"], key=lambda x: x['score'])
-            elif game_mode == "Limited":
-                #TODO
-                pass
+            elif game_mode == "Test":
+                self.game_queue = []
+                for level in ["A1", "A2", "B1", "B2", "C1", "C2"]:
+                    self.game_queue.extend(self.fetch_random_by_level(level, 5))
+                for word in self.game_queue:
+                    print("load_game_queue Test", word)
+                    word['score'] = 0
+                    word['flag'] = False
             else:
                 self.game_queue = copy.deepcopy(sorted(self.data, key=lambda x: x['score']))
 
@@ -95,25 +100,38 @@ class Database:
         else:
             raise Exception("Data is empty")
 
-    def update_score_in_game_queue(self, word_id, score):
-        flag = False
-        if self.game_queue:
-            for word_index in range(len(self.game_queue)):
-                if self.game_queue[word_index]['id'] == word_id:
-                    self.game_queue[word_index]['score'] += score  # Add to score
-                    temp = self.game_queue.pop(word_index)  # Remove from queue
-                    print("update_score_in_game_queue temp after update", temp)
-                    for i in range(len(self.game_queue)):
-                        if self.game_queue[i]['score'] > temp['score']:
-                            self.game_queue.insert(i, temp)
-                            flag = True
-                            break
-                    break
-            if not flag:
-                self.game_queue.append(temp)
-            self.update_score_in_db(word_id, score)
+    def update_score_in_game_queue(self, word_id, score, game_mode):
+        if game_mode == "Test":
+            if self.game_queue:
+                for word_index in range(len(self.game_queue)):
+                    if self.game_queue[word_index]['id'] == word_id:
+                        self.game_queue[word_index]['score'] += score
+                        self.game_queue[word_index]['flag'] = True
+                        temp = self.game_queue[word_index]
+                        self.game_queue.remove(self.game_queue[word_index])
+                        self.game_queue.append(temp)
+                        break
+            else:
+                raise Exception("Game queue is empty")
         else:
-            raise Exception("Game queue is empty")
+            flag = False
+            if self.game_queue:
+                for word_index in range(len(self.game_queue)):
+                    if self.game_queue[word_index]['id'] == word_id:
+                        self.game_queue[word_index]['score'] += score  # Add to score
+                        temp = self.game_queue.pop(word_index)  # Remove from queue
+                        print("update_score_in_game_queue temp after update", temp)
+                        for i in range(len(self.game_queue)):
+                            if self.game_queue[i]['score'] > temp['score']:
+                                self.game_queue.insert(i, temp)
+                                flag = True
+                                break
+                        break
+                if not flag:
+                    self.game_queue.append(temp)
+                self.update_score_in_db(word_id, score)
+            else:
+                raise Exception("Game queue is empty")
     
     def update_score_in_db(self, word_id, score):
         print("update_score_in_db word score param", score)
@@ -161,13 +179,22 @@ class Database:
         else:
             raise Exception("Data is empty")
     
-    def fetch_next_card(self):
+    def fetch_next_card(self, game_mode):
         # Fetch the next card to study
-        print("fetch_next_card", "game_queue", self.game_queue)
-        if self.game_queue:
-            return self.game_queue[0]
+        print("fetch_next_card -> ", "game_queue -> ", self.game_queue)
+        if game_mode == "Test":
+            if self.game_queue:
+                if self.game_queue[0]['flag']:
+                    return None
+                else:
+                    return self.game_queue[0]
+            else:
+                raise Exception("Game queue is empty")
         else:
-            return None
+            if self.game_queue:
+                return self.game_queue[0]
+            else:
+                return None
     
     def fetch_random_card(self):
         # Fetch a random card
@@ -200,7 +227,12 @@ class Database:
             raise Exception("Data is empty")
 
     def fetch_random_by_level(self, level, limit=1):
-        output = []
-        for i in limit:
-            output.append(random.choice(self.fetch_all_words_by_level(level)))
-        return output
+        out = []
+        words = self.fetch_all_words_by_level(level)
+        try:
+            if words:
+                out = random.sample(words, limit)
+            return out
+        except Exception as e:
+            print(e)
+            return []
