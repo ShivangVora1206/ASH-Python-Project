@@ -1,11 +1,14 @@
 from tkinter import *
 from tkinter import ttk, font as tkFont
+from tkinter.filedialog import asksaveasfilename
 from tkextrafont import Font
 import random
 from PIL import Image, ImageTk  # For handling images
 from database import Database
 from beolingus import Beolingus
 import configparser
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
 c = configparser.ConfigParser()
 c.read_file(open('config.ini'))
@@ -45,6 +48,18 @@ style.configure("Custom.TButton",
                 font=('Montserrat', 15),
                 foreground="black"
                 )
+# style.theme_use('clam')
+
+style.configure("CustomNext.TButton", 
+                borderwidth=2, 
+                relief="solid", 
+                padding=5,
+                background="green", 
+                font=('Montserrat', 15, 'bold'),
+                foreground="black",)
+
+
+
 
 # Load the background image
 background_image_path = c.get('ASHConfig', 'background_image_path')
@@ -166,7 +181,7 @@ def update_more_info_binding(event):
     more_info_content_label.config(wraplength=root.winfo_width()-20)
 
 def load_next_card():
-    global current_card, options, feedback_label, card_label, user_level_label, threshold, option_length_limit, button_result
+    global current_card, options, feedback_label, card_label, user_level_label, threshold, option_length_limit, button_result, selected_game_mode
     if feedback_label:
         feedback_label.destroy()
         feedback_label = None
@@ -174,7 +189,7 @@ def load_next_card():
         user_level_label.destroy()
         user_level_label = None
     if button_next:
-        button_next.config(state=DISABLED)
+        button_next.config(state=DISABLED, style="Rounded.TButton")
     if button_result:
         button_result.destroy()
         button_result = None
@@ -194,14 +209,15 @@ def load_next_card():
         canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
         return
     
-    user_level_label = Label(canvas_game, text="", font=fontM, fg='black', bg="#5c0001")
-    if threshold < card_data['score']:
-        user_level_label.config(text="You are doing great with this word!", fg="green")
-    elif threshold-2 <= card_data['score'] <= threshold:
-        user_level_label.config(text="You are learning fast!", fg="orange")
-    else:
-        user_level_label.config(text="This word is still new to you!", fg="red")
-    canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.65, window=user_level_label)
+    if selected_game_mode != "Test":
+        user_level_label = Label(canvas_game, text="", font=fontM, fg='black', bg="#5c0001")
+        if threshold < card_data['score']:
+            user_level_label.config(text="You are doing great with this word!", fg="green")
+        elif threshold-2 <= card_data['score'] <= threshold:
+            user_level_label.config(text="You are learning fast!", fg="orange")
+        else:
+            user_level_label.config(text="This word is still new to you!", fg="red")
+        canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.65, window=user_level_label)
 
     current_card = card_data
     card_label.config(text=current_card['German'])  # Display the German word
@@ -250,25 +266,26 @@ def card_label_toggle():
         # canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.50, window=card_label_frame)
         card_label.config(text=current_card['German']+'\n'+current_card['English'])
         card_label_toggle_state = True
-    button_next.config(state=NORMAL)
+    button_next.config(state=NORMAL, style="CustomNext.TButton")
 
 
 def check_answer(selected_option):
     global current_card
-    global feedback_label
+    global feedback_label, selected_game_mode
     if feedback_label:
         feedback_label.destroy()
     feedback_label = Label(canvas_game, text="", font=fontM, fg='red', bg="#5c0001", wraplength=400)
     if selected_option == current_card['English']:  # Check against the correct answer (English meaning)
-        
-        feedback_label.config(text="Congratulations, Correct Answer", fg="green", bg="#ffffff")
-        canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
+        if selected_game_mode != 'Test':
+            feedback_label.config(text="Congratulations, Correct Answer", fg="green", bg="#ffffff")
+            canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
 
         db.update_score_in_game_queue(current_card['id'], score=1, game_mode=selected_game_mode)  # Increment score by 1 for correct answer
     
     else:
-        feedback_label.config(text="Wrong Answer. Try Again!", fg="red", bg="#ffffff")
-        canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
+        if selected_game_mode != 'Test':
+            feedback_label.config(text="Wrong Answer. Try Again!", fg="red", bg="#ffffff")
+            canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
         
         if selected_game_mode == "Test":
             db.update_score_in_game_queue(current_card['id'], score=0, game_mode=selected_game_mode)  # No decrement in test mode wrong answer
@@ -276,9 +293,42 @@ def check_answer(selected_option):
             db.update_score_in_game_queue(current_card['id'], score=-1, game_mode=selected_game_mode)  # Decrement score by 1 for wrong answer
     
     
-    button_next.config(state=NORMAL)
+    button_next.config(state=NORMAL, style='CustomNext.TButton')
     # Delay before loading the next card
     # root.after(1000, load_next_card)  # 1 second delay before loading the next card
+
+def generate_pdf():
+    result = db.evaluate_result(selected_game_mode)
+    if not result:
+        return
+
+        # Open a file dialog to choose the location and filename for the PDF
+    pdf_filename = asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF files", "*.pdf")])
+    if not pdf_filename:
+        return  # User cancelled the file dialog
+
+    c = canvas.Canvas(pdf_filename, pagesize=letter)
+    width, height = letter
+
+    # Add a logo at the top
+    logo_path = "logo.png"  # Replace with the path to your logo
+    c.drawImage(logo_path, x=width/2 - 50, y=height - 100, width=100, height=100)
+
+    # Add the scores and predicted level
+    y_position = height - 150
+    c.setFont("Helvetica", 12)
+    c.drawString(100, y_position, f"Predicted Level: {result['predicted_level']}")
+    y_position -= 20
+    c.drawString(100, y_position, f"Total Score: {result['total_score']}")
+    y_position -= 20
+
+    for level, score in result['scores'].items():
+        y_position -= 20
+        c.drawString(100, y_position, f"Score for {level}: {score}")
+
+    c.save()
+    print(f"PDF generated: {pdf_filename}")
+
 
 frame_main_top = Frame(page_main)
 frame_main_top.pack(expand=True, fill='both', side='top')
@@ -437,6 +487,9 @@ result_total_score.pack(expand=True)
 
 result_scores = Label(page_result, text="", font=fontM, fg='black')
 result_scores.pack(expand=True)
+
+button_generate_pdf = ttk.Button(page_result, text="Generate PDF", command=generate_pdf, style="Rounded.TButton")
+button_generate_pdf.pack(expand=True)
 
 button_back_to_game = ttk.Button(page_result, text="Back to Game", command=lambda : start_game(True), style="Rounded.TButton")
 button_back_to_game.pack(expand=True)
