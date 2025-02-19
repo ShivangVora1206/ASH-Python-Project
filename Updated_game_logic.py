@@ -22,7 +22,9 @@ root.minsize(c.getint('ASHConfig', 'root_min_x'), c.getint('ASHConfig', 'root_mi
 
 custom_font1 = Font(file="Montserrat-Regular.ttf", family="Montserrat")
 custom_font2 = Font(file="AlteHaasGroteskBold.ttf", family="Alte Haas Grotesk Bold")
+custom_font3 = Font(file="Minecraft.ttf", family="Minecraft")
 
+fontXL = tkFont.Font(family="Minecraft", size=48)
 fontL = tkFont.Font(family="Alte Haas Grotesk Bold", size=24)
 fontM = tkFont.Font(family="Montserrat", size=15)
 
@@ -57,6 +59,7 @@ page_game = Frame(root)
 page_more_info = Frame(root)
 page_add_card = Frame(root)
 page_remove_card = Frame(root)
+page_result = Frame(root)
 # Current card and answer variables
 current_card = None
 options = []
@@ -66,10 +69,12 @@ card_label_frame = None
 card_label = None
 feedback_label = None
 user_level_label = None
+button_result = None
 threshold = c.getint("ASHConfig", "threshold")
 game_modes = ["Default", "Level A1", "Level A2", "Level B1", "Level B2", "Level C1", "Level C2", "Test"]
 selected_game_mode = game_modes[0]
 selected_game_mode_var = StringVar(value=selected_game_mode)
+option_length_limit = c.getint("ASHConfig", "option_length_limit")
 # Functions to handle the game logic and navigation
 def show_main_menu():
     page_game.pack_forget()
@@ -90,6 +95,7 @@ def start_game(back=False):
     card_label_toggle_state = False
     page_main.pack_forget()
     page_more_info.pack_forget()
+    page_result.pack_forget()
     page_game.pack(expand=True)
     if not back:
         load_next_card()
@@ -109,30 +115,15 @@ def show_remove_card():
     page_main.pack_forget()
     page_remove_card.pack(expand=True)
 
-# def update_button_positions(event):
-#     # Get the current size of the canvas
-#     canvas_width = event.width
-#     canvas_height = event.height
+def show_result_page():
+    result = db.evaluate_result(selected_game_mode)
+    if result:
+        result_predicted_level.config(text=f"Predicted Level: {result['predicted_level']}")
+        result_total_score.config(text=f"Total Score: {result['total_score']}")
+        result_scores.config(text=f"Scores by Level: {result['scores']}")
+    page_game.pack_forget()
+    page_result.pack(expand=True)
 
-#     # Calculate the positions of the buttons as fractions of canvas size
-#     canvas_game.create_window(canvas_width * 0.25, canvas_height * 0.25, window=option_buttons[0])
-#     canvas_game.create_window(canvas_width * 0.75, canvas_height * 0.25, window=option_buttons[1])
-#     canvas_game.create_window(canvas_width * 0.25, canvas_height * 0.75, window=option_buttons[2])
-#     canvas_game.create_window(canvas_width * 0.75, canvas_height * 0.75, window=option_buttons[3])
-
-#     update_image_scale(event)
-
-# def update_image_scale(event):
-#     global canvas_image
-#     # print("Image scale updated")
-#     canvas_width = event.width
-#     canvas_height = event.height
-
-#     # Resize the image to fit the canvas
-#     bg_image_resized = background_image.resize((canvas_width, canvas_height))
-#     bg_image_tk = ImageTk.PhotoImage(bg_image_resized)
-#     canvas_game.create_image(0, 0, anchor=NW, image=bg_image_tk)
-#     canvas_image = bg_image_tk
 
 def update_canvas_binding(event):
     global canvas_image
@@ -175,7 +166,7 @@ def update_more_info_binding(event):
     more_info_content_label.config(wraplength=root.winfo_width()-20)
 
 def load_next_card():
-    global current_card, options, feedback_label, card_label, user_level_label, threshold
+    global current_card, options, feedback_label, card_label, user_level_label, threshold, option_length_limit, button_result
     if feedback_label:
         feedback_label.destroy()
         feedback_label = None
@@ -184,12 +175,19 @@ def load_next_card():
         user_level_label = None
     if button_next:
         button_next.config(state=DISABLED)
+    if button_result:
+        button_result.destroy()
+        button_result = None
 
     card_data = db.fetch_next_card(selected_game_mode) # Fetch a random card from the database
     
     if not card_data and selected_game_mode == "Test":
         feedback_label = Label(canvas_game, text="Test completed! Check your result!", font=fontM, fg="green", bg="#5c0001")
         canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
+        button_result = ttk.Button(canvas_game, text="Result", command=show_result_page, style="Rounded.TButton")
+        canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.65, window=button_result)
+        #TODO temp db eval check
+        # db.evaluate_result(selected_game_mode)
         return
     elif not card_data and selected_game_mode != "Test":    
         feedback_label = Label(canvas_game, text="No more cards available!", font=fontM, fg="red", bg="#5c0001")
@@ -209,12 +207,17 @@ def load_next_card():
     card_label.config(text=current_card['German'])  # Display the German word
 
     correct_answer = current_card['English']  # The correct answer is the English meaning
+    if len(correct_answer) > option_length_limit:
+        correct_answer = correct_answer[:option_length_limit] + "..."
+        current_card['English'] = correct_answer
     options = [correct_answer]
 
     # Populate remaining options with random meanings
     while len(options) < 4:
         random_option = db.fetch_random_meaning()  # Fetch a random meaning
         if random_option not in options:
+            if len(random_option) > option_length_limit:
+                random_option = random_option[:option_length_limit] + "..."
             options.append(random_option)
 
     max_len = max([len(opt) for opt in options])
@@ -286,7 +289,7 @@ frame_main_bottom.pack(expand=True, fill='both')
 frame_main_middle = Frame(page_main)
 frame_main_middle.pack(expand=True, fill='both', side='bottom')
 
-label_main = Label(frame_main_top, text="ASH Cards", font=fontL, fg='#1ecbe1', bg='white', width=20, height=5)
+label_main = Label(frame_main_top, text="ASH Cards", font=fontXL, fg='#1ecbe1', bg='white')
 label_main.pack(expand=True, anchor='center')
 
 button_start = ttk.Button(frame_main_bottom, text="Start Game",  command=start_game, style="Rounded.TButton")
@@ -374,17 +377,16 @@ more_info_back_button.pack(expand=True)
 page_add_card_frame = Frame(page_add_card, bg='white', padx=10, pady=10)
 page_add_card_frame.pack(expand=True)
 
-page_add_card_label_german = Label(page_add_card_frame, text="Enter German word:", font=fontL, fg='black')
+page_add_card_label_german = Label(page_add_card_frame, text="Enter German word:", font=fontL, fg='#1ecbe1', bg='white')
 page_add_card_label_german.pack(expand=True)
-page_add_card_label_english = Label(page_add_card_frame, text="Enter English word:", font=fontL, fg='black')
-page_add_card_label_english.pack(expand=True)
-page_add_card_label_level = Label(page_add_card_frame, text="Enter CEFR Level:", font=fontL, fg='black')
-page_add_card_label_level.pack(expand=True)
-
 page_add_card_entry_german = Entry(page_add_card_frame, font=fontM, width=30)
 page_add_card_entry_german.pack(expand=True)
+page_add_card_label_english = Label(page_add_card_frame, text="Enter English word:", font=fontL, fg='#1ecbe1', bg='white')
+page_add_card_label_english.pack(expand=True)
 page_add_card_entry_english = Entry(page_add_card_frame, font=fontM, width=30)
 page_add_card_entry_english.pack(expand=True)
+page_add_card_label_level = Label(page_add_card_frame, text="Enter CEFR Level:", font=fontL, fg='#1ecbe1', bg='white')
+page_add_card_label_level.pack(expand=True)
 page_add_card_entry_level = Entry(page_add_card_frame, font=fontM, width=30)
 page_add_card_entry_level.pack(expand=True)
 
@@ -409,7 +411,7 @@ page_add_card_back_button.pack(expand=True)
 page_remove_card_frame = Frame(page_remove_card, bg='white', padx=10, pady=10)
 page_remove_card_frame.pack(expand=True)
 
-page_remove_card_label = Label(page_remove_card_frame, text="Enter card id to remove:", font=fontL, fg='black')
+page_remove_card_label = Label(page_remove_card_frame, text="Enter card id to remove:", font=fontL, fg='#1ecbe1', bg='white')
 page_remove_card_label.pack(expand=True)
 
 page_remove_card_entry = Entry(page_remove_card_frame, font=fontM, width=30)
@@ -426,6 +428,18 @@ page_remove_card_submit_button = ttk.Button(page_remove_card_frame, text="Submit
 page_remove_card_submit_button.pack(expand=True)
 page_remove_card_back_button = ttk.Button(page_remove_card_frame, text="Back", command=show_main_menu, style="Rounded.TButton")
 page_remove_card_back_button.pack(expand=True)
+
+result_predicted_level = Label(page_result, text="", font=fontL, fg='black')
+result_predicted_level.pack(expand=True)
+
+result_total_score = Label(page_result, text="", font=fontM, fg='black')
+result_total_score.pack(expand=True)
+
+result_scores = Label(page_result, text="", font=fontM, fg='black')
+result_scores.pack(expand=True)
+
+button_back_to_game = ttk.Button(page_result, text="Back to Game", command=lambda : start_game(True), style="Rounded.TButton")
+button_back_to_game.pack(expand=True)
 
 canvas_game.bind("<Configure>", update_canvas_binding)
 page_more_info.bind("<Configure>", update_more_info_binding)

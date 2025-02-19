@@ -236,3 +236,63 @@ class Database:
         except Exception as e:
             print(e)
             return []
+
+    def evaluate_result(self, game_mode):
+        if game_mode != "Test":
+            print("Cannot evaluate result in non-test mode")
+            return
+        cache = {}
+        score = 0
+        out = {}
+        total_words = 0
+        max_score = 0  # Initialize max_score to calculate the maximum possible score
+
+        for word in self.game_queue:
+            if word['level'] in cache.keys():
+                cache[word['level']] += word['score']
+            else:
+                cache[word['level']] = word['score']
+            total_words += 1
+            max_score += 6  # Each word can contribute a maximum score of 6 (C2 level)
+
+        # Normalize scores based on the number of words in each level
+        for level in cache.keys():
+            level_word_count = len([word for word in self.game_queue if word['level'] == level])
+            if level_word_count > 0:
+                cache[level] = cache[level] / level_word_count
+
+        for i in cache.keys():
+            if i == "A1":
+                score += cache[i] * 1
+            elif i == "A2":
+                score += cache[i] * 2
+            elif i == "B1":
+                score += cache[i] * 3
+            elif i == "B2":
+                score += cache[i] * 4
+            elif i == "C1":
+                score += cache[i] * 5
+            elif i == "C2":
+                score += cache[i] * 6
+
+        # Normalize the total score based on the maximum possible score
+        if max_score > 0:
+            score = score / max_score * total_words  # Scale the score to be between 0 and 6
+
+        if 0 <= score <= 1:
+            out['predicted_level'] = "A1"
+        elif 1 < score <= 2:
+            out['predicted_level'] = "A2"
+        elif 2 < score <= 3:
+            out['predicted_level'] = "B1"
+        elif 3 < score <= 4:
+            out['predicted_level'] = "B2"
+        elif 4 < score <= 5:
+            out['predicted_level'] = "C1"
+        elif 5 < score <= 6:
+            out['predicted_level'] = "C2"
+
+        out['scores'] = cache
+        out['total_score'] = score
+        print(out)
+        return out
