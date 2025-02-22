@@ -1,18 +1,17 @@
 from tkinter import *
 from tkinter import ttk, font as tkFont
-from tkinter.filedialog import asksaveasfilename
 from tkextrafont import Font
 import random
 from PIL import Image, ImageTk  # For handling images
 from database import Database
 from beolingus import Beolingus
 import configparser
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
+from PdfGenerator import PdfGen
 
 c = configparser.ConfigParser()
 c.read_file(open('config.ini'))
 db = Database(c.get("ASHConfig", "db_path"))  # Use your dataset here
+pdf_gen = PdfGen(db)
 b = Beolingus()
 print("check ->")
 b.check()
@@ -34,7 +33,7 @@ fontXL = tkFont.Font(family="Minecraft", size=48)
 fontL = tkFont.Font(family="Alte Haas Grotesk Bold", size=24)
 fontM = tkFont.Font(family="Montserrat", size=15)
 fontMB = tkFont.Font(family="Montserrat", size=15, weight="bold")
-
+fontSM = tkFont.Font(family="Montserrat", size=9)
 
 style = ttk.Style()
 style.configure("Rounded.TButton", 
@@ -92,6 +91,7 @@ card_label = None
 feedback_label = None
 user_level_label = None
 button_result = None
+card_id_label = None
 threshold = c.getint("ASHConfig", "threshold")
 game_modes = ["Default", "Level A1", "Level A2", "Level B1", "Level B2", "Level C1", "Level C2", "Test"]
 selected_game_mode = game_modes[0]
@@ -167,7 +167,7 @@ def update_canvas_binding(event):
     canvas_game.create_window(canvas_width * 0.70, canvas_height * 0.55, window=option_buttons[3])
 
     canvas_game.create_window(canvas_width * 0.50, canvas_height * 0.25, window=card_label_frame)
-
+    canvas_game.create_window(canvas_width * 0.955, canvas_height * 0.985, window=card_id_label)
     # if card_label_frame and card_label_toggle_state:
     #     canvas_game.create_window(canvas_width * 0.50, canvas_height * 0.50, window=card_label_frame)
 
@@ -188,7 +188,7 @@ def update_more_info_binding(event):
     more_info_content_label.config(wraplength=root.winfo_width()-20)
 
 def load_next_card():
-    global current_card, options, feedback_label, card_label, user_level_label, threshold, option_length_limit, button_result, selected_game_mode
+    global current_card, options, feedback_label, card_label, user_level_label, threshold, option_length_limit, button_result, selected_game_mode, card_id_label
     if feedback_label:
         feedback_label.destroy()
         feedback_label = None
@@ -204,7 +204,7 @@ def load_next_card():
     card_data = db.fetch_next_card(selected_game_mode) # Fetch a random card from the database
     
     if not card_data and selected_game_mode == "Test":
-        feedback_label = Label(canvas_game, text="Test completed! Check your result!", font=fontM, fg="green", bg="#5c0001")
+        feedback_label = Label(canvas_game, text="Test completed! Check your result!", font=fontM, fg="green", bg="#37435a")
         canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
         button_result = ttk.Button(canvas_game, text="Result", command=show_result_page, style="Rounded.TButton")
         canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.65, window=button_result)
@@ -228,7 +228,7 @@ def load_next_card():
 
     current_card = card_data
     card_label.config(text=current_card['German'])  # Display the German word
-
+    card_id_label.config(text=f"Card ID: {current_card['id']}")
     correct_answer = current_card['English']  # The correct answer is the English meaning
     if len(correct_answer) > option_length_limit:
         correct_answer = correct_answer[:option_length_limit] + "..."
@@ -254,7 +254,10 @@ def load_more_info(card):
     # print("card", card)
     if card:
         word = card['German']
-        return b.show_query(word, de=True, en=True, first=True, apart=True, ignorecase=True)
+        info = b.show_query(word, de=True, en=True, first=True, apart=True, ignorecase=True)
+        if info:
+            return info
+        return "No more info available"
     else:
         return "Not found"
 
@@ -286,6 +289,9 @@ def check_answer(selected_option):
         if selected_game_mode != 'Test':
             feedback_label.config(text="Congratulations, Correct Answer", fg="green", bg="#ffffff")
             canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
+        else:
+            feedback_label.config(text="Choice Marked!", fg="orange", bg="#ffffff")
+            canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
 
         db.update_score_in_game_queue(current_card['id'], score=1, game_mode=selected_game_mode)  # Increment score by 1 for correct answer
     
@@ -295,8 +301,12 @@ def check_answer(selected_option):
             canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
         
         if selected_game_mode == "Test":
+            feedback_label.config(text="Choice Marked!", fg="orange", bg="#ffffff")
+            canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
             db.update_score_in_game_queue(current_card['id'], score=0, game_mode=selected_game_mode)  # No decrement in test mode wrong answer
         else:
+            feedback_label.config(text="Choice Marked!", fg="orange", bg="#ffffff")
+            canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
             db.update_score_in_game_queue(current_card['id'], score=-1, game_mode=selected_game_mode)  # Decrement score by 1 for wrong answer
     
     
@@ -304,37 +314,6 @@ def check_answer(selected_option):
     # Delay before loading the next card
     # root.after(1000, load_next_card)  # 1 second delay before loading the next card
 
-def generate_pdf():
-    result = db.evaluate_result(selected_game_mode)
-    if not result:
-        return
-
-        # Open a file dialog to choose the location and filename for the PDF
-    pdf_filename = asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF files", "*.pdf")])
-    if not pdf_filename:
-        return  # User cancelled the file dialog
-
-    c = canvas.Canvas(pdf_filename, pagesize=letter)
-    width, height = letter
-
-    # Add a logo at the top
-    logo_path = "logo.png"  # Replace with the path to your logo
-    c.drawImage(logo_path, x=width/2 - 50, y=height - 100, width=100, height=100)
-
-    # Add the scores and predicted level
-    y_position = height - 150
-    c.setFont("Helvetica", 12)
-    c.drawString(100, y_position, f"Predicted Level: {result['predicted_level']}")
-    y_position -= 20
-    c.drawString(100, y_position, f"Total Score: {result['total_score']}")
-    y_position -= 20
-
-    for level, score in result['scores'].items():
-        y_position -= 20
-        c.drawString(100, y_position, f"Score for {level}: {score}")
-
-    c.save()
-    print(f"PDF generated: {pdf_filename}")
 
 
 frame_main_top = Frame(page_main,  bg=root_bg)
@@ -410,6 +389,10 @@ canvas_game.create_window(250, 470, window=button_more_info)
 card_label_frame = Frame(canvas_game, bg='white', padx=40, pady=40, borderwidth=2, relief="solid")
 card_label = Label(card_label_frame, text="", font=fontL, fg='black')
 card_label.pack(expand=True)
+
+card_id_label = Label(canvas_game, text="", font=fontSM, fg=root_fg, bg='#37435a')
+canvas_game.create_window(0, 0, window=card_id_label)
+card_id_label.config(bg='#37435a', highlightthickness=0)
 
 # Create buttons to control the visibility of the label
 # button_toggle = Button(canvas_game, text="Toggle Card Label", command=card_label_toggle, bg="#ffffff")
@@ -495,7 +478,7 @@ result_total_score.pack(expand=True)
 result_scores = Label(page_result, text="", font=fontM, fg='black')
 result_scores.pack(expand=True)
 
-button_generate_pdf = ttk.Button(page_result, text="Generate PDF", command=generate_pdf, style="Rounded.TButton")
+button_generate_pdf = ttk.Button(page_result, text="Generate PDF", command=lambda : pdf_gen.generate_pdf(selected_game_mode), style="Rounded.TButton")
 button_generate_pdf.pack(expand=True)
 
 button_back_to_game = ttk.Button(page_result, text="Back to Game", command=lambda : start_game(True), style="Rounded.TButton")

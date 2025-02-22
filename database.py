@@ -294,5 +294,6 @@ class Database:
 
         out['scores'] = cache
         out['total_score'] = score
+        out['cards'] = self.game_queue
         print(out)
         return out
