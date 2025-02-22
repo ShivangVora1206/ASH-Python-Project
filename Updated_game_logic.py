@@ -17,12 +17,15 @@ b = Beolingus()
 print("check ->")
 b.check()
 
+root_bg = c.get('ASHConfig', 'root_bg')
+root_fg = c.get('ASHConfig', 'root_fg')
+
 # Initialize Tkinter
 root = Tk()
 root.title(c.get('ASHConfig', 'root_title'))
 root.geometry(c.get('ASHConfig', 'root_geometry'))  # Window size is fixed to 500x400
 root.minsize(c.getint('ASHConfig', 'root_min_x'), c.getint('ASHConfig', 'root_min_y'))
-
+root.configure(bg=root_bg)
 custom_font1 = Font(file="Montserrat-Regular.ttf", family="Montserrat")
 custom_font2 = Font(file="AlteHaasGroteskBold.ttf", family="Alte Haas Grotesk Bold")
 custom_font3 = Font(file="Minecraft.ttf", family="Minecraft")
@@ -30,15 +33,19 @@ custom_font3 = Font(file="Minecraft.ttf", family="Minecraft")
 fontXL = tkFont.Font(family="Minecraft", size=48)
 fontL = tkFont.Font(family="Alte Haas Grotesk Bold", size=24)
 fontM = tkFont.Font(family="Montserrat", size=15)
+fontMB = tkFont.Font(family="Montserrat", size=15, weight="bold")
+
 
 style = ttk.Style()
 style.configure("Rounded.TButton", 
                 borderwidth=2, 
                 relief="solid", 
                 padding=5,
-                background="#1ecbe1", 
+                background=root_fg, 
                 font=('Montserrat', 15),
-                foreground="black")
+                foreground=root_bg,
+                
+                )
 
 style.configure("Custom.TButton", 
                 borderwidth=1, 
@@ -69,7 +76,7 @@ bg_image_tk = ImageTk.PhotoImage(background_image)
 
 canvas_image = None
 # Frames for pages
-page_main = Frame(root)
+page_main = Frame(root,  bg=root_bg)
 page_game = Frame(root)
 page_more_info = Frame(root)
 page_add_card = Frame(root)
@@ -106,13 +113,13 @@ def start_game(back=False):
         button_flip.config(state=DISABLED)
     else:
         button_flip.config(state=NORMAL)
-    current_card = None
     card_label_toggle_state = False
     page_main.pack_forget()
     page_more_info.pack_forget()
     page_result.pack_forget()
     page_game.pack(expand=True)
     if not back:
+        current_card = None
         load_next_card()
 
 def show_more_info():
@@ -210,7 +217,7 @@ def load_next_card():
         return
     
     if selected_game_mode != "Test":
-        user_level_label = Label(canvas_game, text="", font=fontM, fg='black', bg="#5c0001")
+        user_level_label = Label(canvas_game, text="", font=fontMB, fg='black', bg="#37435a",)
         if threshold < card_data['score']:
             user_level_label.config(text="You are doing great with this word!", fg="green")
         elif threshold-2 <= card_data['score'] <= threshold:
@@ -330,38 +337,38 @@ def generate_pdf():
     print(f"PDF generated: {pdf_filename}")
 
 
-frame_main_top = Frame(page_main)
+frame_main_top = Frame(page_main,  bg=root_bg)
 frame_main_top.pack(expand=True, fill='both', side='top')
 
-frame_main_bottom = Frame(page_main, pady=20)
+frame_main_bottom = Frame(page_main, pady=20,  bg=root_bg)
 frame_main_bottom.pack(expand=True, fill='both')
 
-frame_main_middle = Frame(page_main)
+frame_main_middle = Frame(page_main,  bg=root_bg)
 frame_main_middle.pack(expand=True, fill='both', side='bottom')
 
-label_main = Label(frame_main_top, text="ASH Cards", font=fontXL, fg='#1ecbe1', bg='white')
+label_main = Label(frame_main_top, text="ASH Cards", font=fontXL, fg=root_fg, bg=root_bg)
 label_main.pack(expand=True, anchor='center')
 
 button_start = ttk.Button(frame_main_bottom, text="Start Game",  command=start_game, style="Rounded.TButton")
-button_start.pack(expand=True, anchor='center')
+button_start.pack(expand=True, anchor='center', pady=3)
 
 button_add_card = ttk.Button(frame_main_bottom, text="Add Card", command=show_add_card, style="Rounded.TButton")
-button_add_card.pack(expand=True, anchor='center')
+button_add_card.pack(expand=True, anchor='center', pady=3)
 
 button_remove_card = ttk.Button(frame_main_bottom, text="Remove Card", command=show_remove_card, style="Rounded.TButton")
-button_remove_card.pack(expand=True, anchor='center')       
+button_remove_card.pack(expand=True, anchor='center', pady=3)       
 
 button_exit = ttk.Button(frame_main_bottom, text="Exit", command=root.quit, style="Rounded.TButton")
-button_exit.pack(expand=True, anchor='center')
+button_exit.pack(expand=True, anchor='center', pady=3)
 
-game_mode_label = Label(frame_main_middle, text="Select Game Mode:", font=fontM, fg='black', bg='white')
+game_mode_label = Label(frame_main_middle, text="Select Game Mode:", font=fontM, fg=root_fg, bg=root_bg)
 game_mode_label.pack(expand=True, anchor='center')
 
-game_mode_frame = Frame(frame_main_middle, bg='white')
+game_mode_frame = Frame(frame_main_middle, bg=root_bg)
 game_mode_frame.pack(expand=True, anchor='center')
 
 for i, mode in enumerate(game_modes):
-    radio_button = Radiobutton(game_mode_frame, text=mode, variable=selected_game_mode_var, value=mode, font=fontM, fg='black', bg='white')
+    radio_button = Radiobutton(game_mode_frame, text=mode, variable=selected_game_mode_var, value=mode, font=fontM, fg=root_fg, bg=root_bg)
     radio_button.grid(column=i//2, row=i%2, sticky=W)
 
 
@@ -412,7 +419,7 @@ card_label.pack(expand=True)
 # canvas_game.bind("<Configure>", update_image_scale)
 
 # More Info Page
-frame_more_info = Frame(page_more_info, bg='white', padx=10, pady=10)
+frame_more_info = Frame(page_more_info, bg=root_bg, padx=10, pady=10)
 frame_more_info.pack(expand=True)
 
 more_info_german_label = Label(frame_more_info, text="", font=fontL, fg='black')
@@ -421,23 +428,23 @@ more_info_german_label.pack(expand=True)
 more_info_content_label = Label(frame_more_info, text="", font=fontM, fg='black', wraplength=900)
 more_info_content_label.pack(expand=True)
 more_info_back_button = ttk.Button(frame_more_info, text="Back", command=lambda: start_game(True), style="Rounded.TButton")
-more_info_back_button.pack(expand=True)
+more_info_back_button.pack(expand=True, pady=10)
 
 # Add Card Page
 page_add_card_frame = Frame(page_add_card, bg='white', padx=10, pady=10)
 page_add_card_frame.pack(expand=True)
 
-page_add_card_label_german = Label(page_add_card_frame, text="Enter German word:", font=fontL, fg='#1ecbe1', bg='white')
+page_add_card_label_german = Label(page_add_card_frame, text="Enter German word:", font=fontL, fg="black", bg='white')
 page_add_card_label_german.pack(expand=True)
-page_add_card_entry_german = Entry(page_add_card_frame, font=fontM, width=30)
+page_add_card_entry_german = Entry(page_add_card_frame, font=fontM, width=30, bg="#def9f9")
 page_add_card_entry_german.pack(expand=True)
-page_add_card_label_english = Label(page_add_card_frame, text="Enter English word:", font=fontL, fg='#1ecbe1', bg='white')
+page_add_card_label_english = Label(page_add_card_frame, text="Enter English word:", font=fontL, fg="black", bg='white')
 page_add_card_label_english.pack(expand=True)
-page_add_card_entry_english = Entry(page_add_card_frame, font=fontM, width=30)
+page_add_card_entry_english = Entry(page_add_card_frame, font=fontM, width=30, bg="#def9f9")
 page_add_card_entry_english.pack(expand=True)
-page_add_card_label_level = Label(page_add_card_frame, text="Enter CEFR Level:", font=fontL, fg='#1ecbe1', bg='white')
+page_add_card_label_level = Label(page_add_card_frame, text="Enter CEFR Level:", font=fontL, fg="black", bg='white')
 page_add_card_label_level.pack(expand=True)
-page_add_card_entry_level = Entry(page_add_card_frame, font=fontM, width=30)
+page_add_card_entry_level = Entry(page_add_card_frame, font=fontM, width=30, bg="#def9f9")
 page_add_card_entry_level.pack(expand=True)
 
 def submit_add_card():
@@ -451,20 +458,20 @@ def submit_add_card():
     page_add_card_entry_level.delete(0, END)
 
 page_add_card_submit_button = ttk.Button(page_add_card_frame, text="Submit", command=submit_add_card, style="Rounded.TButton")
-page_add_card_submit_button.pack(expand=True)
+page_add_card_submit_button.pack(expand=True, pady=10)
 page_add_card_back_button = ttk.Button(page_add_card_frame, text="Back", command=show_main_menu, style="Rounded.TButton")
 page_add_card_back_button.pack(expand=True)
 
 
 # Remove Card Page
 
-page_remove_card_frame = Frame(page_remove_card, bg='white', padx=10, pady=10)
+page_remove_card_frame = Frame(page_remove_card, bg="white", padx=10, pady=10)
 page_remove_card_frame.pack(expand=True)
 
-page_remove_card_label = Label(page_remove_card_frame, text="Enter card id to remove:", font=fontL, fg='#1ecbe1', bg='white')
+page_remove_card_label = Label(page_remove_card_frame, text="Enter card id to remove:", font=fontL, fg="black", bg="white")
 page_remove_card_label.pack(expand=True)
 
-page_remove_card_entry = Entry(page_remove_card_frame, font=fontM, width=30)
+page_remove_card_entry = Entry(page_remove_card_frame, font=fontM, width=30, bg='#def9f9')
 page_remove_card_entry.pack(expand=True)
 
 def submit_remove_card():
@@ -475,7 +482,7 @@ def submit_remove_card():
     page_remove_card_entry.delete(0, END)  # Clear the entry field after submission
 
 page_remove_card_submit_button = ttk.Button(page_remove_card_frame, text="Submit", command=submit_remove_card, style="Rounded.TButton")
-page_remove_card_submit_button.pack(expand=True)
+page_remove_card_submit_button.pack(expand=True, pady=10)
 page_remove_card_back_button = ttk.Button(page_remove_card_frame, text="Back", command=show_main_menu, style="Rounded.TButton")
 page_remove_card_back_button.pack(expand=True)
 
@@ -492,7 +499,7 @@ button_generate_pdf = ttk.Button(page_result, text="Generate PDF", command=gener
 button_generate_pdf.pack(expand=True)
 
 button_back_to_game = ttk.Button(page_result, text="Back to Game", command=lambda : start_game(True), style="Rounded.TButton")
-button_back_to_game.pack(expand=True)
+button_back_to_game.pack(expand=True, pady=10)
 
 canvas_game.bind("<Configure>", update_canvas_binding)
 page_more_info.bind("<Configure>", update_more_info_binding)
