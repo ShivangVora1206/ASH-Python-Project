@@ -2,7 +2,7 @@ from tkinter import *
 from tkinter import ttk, font as tkFont
 from tkextrafont import Font
 import random
-from PIL import Image, ImageTk  # For handling images
+from PIL import Image, ImageTk
 from database import Database
 from beolingus import Beolingus
 import configparser
@@ -10,7 +10,7 @@ from PdfGenerator import PdfGen
 
 c = configparser.ConfigParser()
 c.read_file(open('config.ini'))
-db = Database(c.get("ASHConfig", "db_path"))  # Use your dataset here
+db = Database(c.get("ASHConfig", "db_path"))
 pdf_gen = PdfGen(db)
 b = Beolingus()
 print("check ->")
@@ -54,7 +54,6 @@ style.configure("Custom.TButton",
                 font=('Montserrat', 15),
                 foreground="black"
                 )
-# style.theme_use('clam')
 
 style.configure("CustomNext.TButton", 
                 borderwidth=2, 
@@ -73,7 +72,6 @@ background_image = Image.open(background_image_path)
 background_image = background_image.resize((c.getint("ASHConfig", "root_x"), c.getint("ASHConfig", "root_y")))  # Resize to fit the window
 bg_image_tk = ImageTk.PhotoImage(background_image)
 
-canvas_image = None
 # Frames for pages
 page_main = Frame(root,  bg=root_bg)
 page_game = Frame(root)
@@ -81,10 +79,12 @@ page_more_info = Frame(root)
 page_add_card = Frame(root)
 page_remove_card = Frame(root)
 page_result = Frame(root)
+
+# Global variables
+canvas_image = None
 # Current card and answer variables
 current_card = None
 options = []
-
 card_label_toggle_state = False
 card_label_frame = None
 card_label = None
@@ -97,7 +97,8 @@ game_modes = ["Default", "Level A1", "Level A2", "Level B1", "Level B2", "Level 
 selected_game_mode = game_modes[0]
 selected_game_mode_var = StringVar(value=selected_game_mode)
 option_length_limit = c.getint("ASHConfig", "option_length_limit")
-# Functions to handle the game logic and navigation
+
+# Functions to handle the navigation
 def show_main_menu():
     page_game.pack_forget()
     page_more_info.pack_forget()
@@ -146,12 +147,12 @@ def show_result_page():
     page_game.pack_forget()
     page_result.pack(expand=True)
 
+# Function to update the image scale and button/label positions when the window is resized
 
 def update_canvas_binding(event):
     global canvas_image
     global card_label_toggle_state
     global card_label_frame
-    # print("Image scale updated")
     canvas_width = event.width
     canvas_height = event.height
 
@@ -168,11 +169,8 @@ def update_canvas_binding(event):
 
     canvas_game.create_window(canvas_width * 0.50, canvas_height * 0.25, window=card_label_frame)
     canvas_game.create_window(canvas_width * 0.955, canvas_height * 0.985, window=card_id_label)
-    # if card_label_frame and card_label_toggle_state:
-    #     canvas_game.create_window(canvas_width * 0.50, canvas_height * 0.50, window=card_label_frame)
 
     if feedback_label:
-        # print("feedback label ->", feedback_label)
         canvas_game.create_window(canvas_width * 0.50, canvas_height * 0.75, window=feedback_label)
     
     if user_level_label:
@@ -184,7 +182,6 @@ def update_canvas_binding(event):
     canvas_game.create_window(canvas_width * 0.82, canvas_height * 0.85, window=button_more_info)
 
 def update_more_info_binding(event):
-    # frame_more_info.config(width=page_width, height=page_height)
     more_info_content_label.config(wraplength=root.winfo_width()-20)
 
 def load_next_card():
@@ -200,6 +197,11 @@ def load_next_card():
     if button_result:
         button_result.destroy()
         button_result = None
+    if button_more_info:
+        if selected_game_mode == "Test":
+            button_more_info.config(state=DISABLED)
+        else:
+            button_more_info.config(state=NORMAL)
 
     card_data = db.fetch_next_card(selected_game_mode) # Fetch a random card from the database
     
@@ -208,9 +210,8 @@ def load_next_card():
         canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
         button_result = ttk.Button(canvas_game, text="Result", command=show_result_page, style="Rounded.TButton")
         canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.65, window=button_result)
-        #TODO temp db eval check
-        # db.evaluate_result(selected_game_mode)
         return
+    
     elif not card_data and selected_game_mode != "Test":    
         feedback_label = Label(canvas_game, text="No more cards available!", font=fontM, fg="red", bg="#5c0001")
         canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
@@ -251,7 +252,6 @@ def load_next_card():
         option_buttons[idx].config(text=option, command=lambda opt=option: check_answer(opt), width=max_len)
 
 def load_more_info(card):
-    # print("card", card)
     if card:
         word = card['German']
         info = b.show_query(word, de=True, en=True, first=True, apart=True, ignorecase=True)
@@ -269,11 +269,6 @@ def card_label_toggle():
         card_label.config(text=current_card['German'])
         card_label_toggle_state = False
     else:
-        #TODO instead of label make it a frame
-        # card_label_frame = Frame(canvas_game, bg='white', padx=10, pady=10)
-        # card_label = Label(card_label_frame, text="temp", font=fontM, fg='black')
-        # card_label.pack(expand=True)
-        # canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.50, window=card_label_frame)
         card_label.config(text=current_card['German']+'\n'+current_card['English'])
         card_label_toggle_state = True
     button_next.config(state=NORMAL, style="CustomNext.TButton")
@@ -299,20 +294,15 @@ def check_answer(selected_option):
         if selected_game_mode != 'Test':
             feedback_label.config(text="Wrong Answer. Try Again!", fg="red", bg="#ffffff")
             canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
+            db.update_score_in_game_queue(current_card['id'], score=-1, game_mode=selected_game_mode)  # Decrement score by 1 for wrong answer
         
-        if selected_game_mode == "Test":
-            feedback_label.config(text="Choice Marked!", fg="orange", bg="#ffffff")
-            canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
-            db.update_score_in_game_queue(current_card['id'], score=0, game_mode=selected_game_mode)  # No decrement in test mode wrong answer
         else:
             feedback_label.config(text="Choice Marked!", fg="orange", bg="#ffffff")
             canvas_game.create_window(canvas_game.winfo_width() * 0.50, canvas_game.winfo_height() * 0.75, window=feedback_label)
-            db.update_score_in_game_queue(current_card['id'], score=-1, game_mode=selected_game_mode)  # Decrement score by 1 for wrong answer
-    
+            db.update_score_in_game_queue(current_card['id'], score=0, game_mode=selected_game_mode)  # No decrement in test mode wrong answer
+
     
     button_next.config(state=NORMAL, style='CustomNext.TButton')
-    # Delay before loading the next card
-    # root.after(1000, load_next_card)  # 1 second delay before loading the next card
 
 
 
@@ -355,18 +345,11 @@ for i, mode in enumerate(game_modes):
 canvas_game = Canvas(page_game, width=c.getint("ASHConfig", "root_x"), height=c.getint("ASHConfig", "root_y"))
 canvas_game.pack(fill="both", expand=True)
 
-# Add the background image to the canvas
 canvas_image = canvas_game.create_image(0, 0, anchor=NW, image=bg_image_tk)
-
-# Place widgets over the canvas
-# word_label = Label(canvas_game, text="", font=fontL, fg='black', bg="#ffffff")
-# canvas_game.create_window(250, 90, window=word_label)
 
 option_buttons = [ttk.Button(canvas_game, text="", style="Custom.TButton") for _ in range(4)]
 for idx, btn in enumerate(option_buttons):
     canvas_game.create_window(250, 150 + idx* 40, window=btn)
-
-# canvas_game.create_window(250, 310, window=feedback_label)
 
 button_back = ttk.Button(canvas_game, text="Exit", command=show_main_menu, style="Rounded.TButton")
 canvas_game.create_window(250, 350, window=button_back)
@@ -383,9 +366,6 @@ canvas_game.create_window(250, 430, window=button_next)
 button_more_info = ttk.Button(canvas_game, text="More", command=show_more_info, style="Rounded.TButton")
 canvas_game.create_window(250, 470, window=button_more_info)
 
-
-# card_label = Label(canvas_game, text="Flipped!", font=fontM, fg='black', bg='yellow')
-# canvas_game.create_window(250, 430, window=card_label)
 card_label_frame = Frame(canvas_game, bg='white', padx=40, pady=40, borderwidth=2, relief="solid")
 card_label = Label(card_label_frame, text="", font=fontL, fg='black')
 card_label.pack(expand=True)
@@ -394,12 +374,6 @@ card_id_label = Label(canvas_game, text="", font=fontSM, fg=root_fg, bg='#37435a
 canvas_game.create_window(0, 0, window=card_id_label)
 card_id_label.config(bg='#37435a', highlightthickness=0)
 
-# Create buttons to control the visibility of the label
-# button_toggle = Button(canvas_game, text="Toggle Card Label", command=card_label_toggle, bg="#ffffff")
-# canvas_game.create_window(250, 470, window=button_toggle)
-
-# Update button positions when the window is resized
-# canvas_game.bind("<Configure>", update_image_scale)
 
 # More Info Page
 frame_more_info = Frame(page_more_info, bg=root_bg, padx=10, pady=10)
@@ -419,14 +393,19 @@ page_add_card_frame.pack(expand=True)
 
 page_add_card_label_german = Label(page_add_card_frame, text="Enter German word:", font=fontL, fg="black", bg='white')
 page_add_card_label_german.pack(expand=True)
+
 page_add_card_entry_german = Entry(page_add_card_frame, font=fontM, width=30, bg="#def9f9")
 page_add_card_entry_german.pack(expand=True)
+
 page_add_card_label_english = Label(page_add_card_frame, text="Enter English word:", font=fontL, fg="black", bg='white')
 page_add_card_label_english.pack(expand=True)
+
 page_add_card_entry_english = Entry(page_add_card_frame, font=fontM, width=30, bg="#def9f9")
 page_add_card_entry_english.pack(expand=True)
+
 page_add_card_label_level = Label(page_add_card_frame, text="Enter CEFR Level:", font=fontL, fg="black", bg='white')
 page_add_card_label_level.pack(expand=True)
+
 page_add_card_entry_level = Entry(page_add_card_frame, font=fontM, width=30, bg="#def9f9")
 page_add_card_entry_level.pack(expand=True)
 
@@ -442,12 +421,12 @@ def submit_add_card():
 
 page_add_card_submit_button = ttk.Button(page_add_card_frame, text="Submit", command=submit_add_card, style="Rounded.TButton")
 page_add_card_submit_button.pack(expand=True, pady=10)
+
 page_add_card_back_button = ttk.Button(page_add_card_frame, text="Back", command=show_main_menu, style="Rounded.TButton")
 page_add_card_back_button.pack(expand=True)
 
 
 # Remove Card Page
-
 page_remove_card_frame = Frame(page_remove_card, bg="white", padx=10, pady=10)
 page_remove_card_frame.pack(expand=True)
 
@@ -466,6 +445,7 @@ def submit_remove_card():
 
 page_remove_card_submit_button = ttk.Button(page_remove_card_frame, text="Submit", command=submit_remove_card, style="Rounded.TButton")
 page_remove_card_submit_button.pack(expand=True, pady=10)
+
 page_remove_card_back_button = ttk.Button(page_remove_card_frame, text="Back", command=show_main_menu, style="Rounded.TButton")
 page_remove_card_back_button.pack(expand=True)
 
@@ -486,7 +466,8 @@ button_back_to_game.pack(expand=True, pady=10)
 
 canvas_game.bind("<Configure>", update_canvas_binding)
 page_more_info.bind("<Configure>", update_more_info_binding)
-# Initial Setup
+
+
 show_main_menu()
-# update_button_positions(None)
+
 root.mainloop()
