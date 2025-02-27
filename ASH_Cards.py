@@ -1,12 +1,15 @@
 from tkinter import *
 from tkinter import ttk, font as tkFont
-from tkextrafont import Font
 import random
 from PIL import Image, ImageTk
 from database import Database
 from beolingus import Beolingus
 import configparser
 from PdfGenerator import PdfGen
+
+from sys import platform
+if platform == 'win32':
+    from tkextrafont import Font
 
 c = configparser.ConfigParser()
 c.read_file(open('config.ini'))
@@ -25,16 +28,24 @@ root.title(c.get('ASHConfig', 'root_title'))
 root.geometry(c.get('ASHConfig', 'root_geometry'))  # Window size is fixed to 500x400
 root.minsize(c.getint('ASHConfig', 'root_min_x'), c.getint('ASHConfig', 'root_min_y'))
 root.configure(bg=root_bg)
-custom_font1 = Font(file="Montserrat-Regular.ttf", family="Montserrat")
-custom_font2 = Font(file="AlteHaasGroteskBold.ttf", family="Alte Haas Grotesk Bold")
-custom_font3 = Font(file="Minecraft.ttf", family="Minecraft")
 
-fontXL = tkFont.Font(family="Minecraft", size=48)
-fontL = tkFont.Font(family="Alte Haas Grotesk Bold", size=24)
-fontM = tkFont.Font(family="Montserrat", size=15)
-fontMB = tkFont.Font(family="Montserrat", size=15, weight="bold")
-fontSM = tkFont.Font(family="Montserrat", size=9)
+if platform == 'win32':
+    custom_font1 = Font(file="Montserrat-Regular.ttf", family="Montserrat")
+    custom_font2 = Font(file="AlteHaasGroteskBold.ttf", family="Alte Haas Grotesk Bold")
+    custom_font3 = Font(file="Minecraft.ttf", family="Minecraft")
 
+    fontXL = tkFont.Font(family="Minecraft", size=48)
+    fontL = tkFont.Font(family="Alte Haas Grotesk Bold", size=24)
+    fontM = tkFont.Font(family="Montserrat", size=15)
+    fontMB = tkFont.Font(family="Montserrat", size=15, weight="bold")
+    fontSM = tkFont.Font(family="Montserrat", size=9)
+else:
+    fontXL = tkFont.Font(family="Helvetica", size=48)
+    fontL = tkFont.Font(family="Helvetica", size=24)
+    fontM = tkFont.Font(family="Helvetica", size=15)
+    fontMB = tkFont.Font(family="Helvetica", size=15, weight="bold")
+    fontSM = tkFont.Font(family="Helvetica", size=9)
+    
 style = ttk.Style()
 style.configure("Rounded.TButton", 
                 borderwidth=2, 
