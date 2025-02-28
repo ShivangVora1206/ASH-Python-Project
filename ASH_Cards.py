@@ -16,7 +16,7 @@ c.read_file(open('config.ini'))
 db = Database(c.get("ASHConfig", "db_path"))
 pdf_gen = PdfGen(db)
 b = Beolingus()
-print("check ->")
+# print("check ->")
 b.check()
 
 root_bg = c.get('ASHConfig', 'root_bg')
@@ -45,7 +45,7 @@ else:
     fontM = tkFont.Font(family="Helvetica", size=15)
     fontMB = tkFont.Font(family="Helvetica", size=15, weight="bold")
     fontSM = tkFont.Font(family="Helvetica", size=9)
-    
+
 style = ttk.Style()
 style.configure("Rounded.TButton", 
                 borderwidth=2, 
@@ -275,7 +275,7 @@ def load_more_info(card):
 def card_label_toggle():
     global card_label_toggle_state
     global card_label
-    print("toggle state", card_label_toggle_state)
+    # print("toggle state", card_label_toggle_state)
     if card_label_toggle_state:
         card_label.config(text=current_card['German'])
         card_label_toggle_state = False
@@ -424,7 +424,7 @@ def submit_add_card():
     new_card_text_german = page_add_card_entry_german.get()
     new_card_text_english = page_add_card_entry_english.get()
     new_card_text_level = page_add_card_entry_level.get()
-    print(f"New card german: {new_card_text_german}, english: {new_card_text_english}, level: {new_card_text_level}")
+    # print(f"New card german: {new_card_text_german}, english: {new_card_text_english}, level: {new_card_text_level}")
     db.add_word(new_card_text_german, new_card_text_english, new_card_text_level)
     page_add_card_entry_german.delete(0, END)
     page_add_card_entry_english.delete(0, END)
@@ -450,7 +450,7 @@ page_remove_card_entry.pack(expand=True)
 def submit_remove_card():
     remove_card_text = page_remove_card_entry.get()
     # Add logic to handle the removal of the card
-    print(f"Card to remove: {remove_card_text}")
+    # print(f"Card to remove: {remove_card_text}")
     db.remove_word(int(remove_card_text))
     page_remove_card_entry.delete(0, END)  # Clear the entry field after submission
 

@@ -54,7 +54,7 @@ class Database:
                 for level in ["A1", "A2", "B1", "B2", "C1", "C2"]:
                     self.game_queue.extend(self.fetch_random_by_level(level, 5))
                 for word in self.game_queue:
-                    print("load_game_queue Test", word)
+                    # print("load_game_queue Test", word)
                     word['score'] = 0
                     word['flag'] = False
             else:
@@ -181,7 +181,7 @@ class Database:
     
     def fetch_next_card(self, game_mode):
         # Fetch the next card to study
-        print("fetch_next_card -> ", "game_queue -> ", self.game_queue)
+        # print("fetch_next_card -> ", "game_queue -> ", self.game_queue)
         if game_mode == "Test":
             if self.game_queue:
                 if self.game_queue[0]['flag']:
@@ -295,5 +295,5 @@ class Database:
         out['scores'] = cache
         out['total_score'] = score
         out['cards'] = self.game_queue
-        print(out)
+        # print(out)
         return out
