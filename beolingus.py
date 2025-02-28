@@ -39,6 +39,8 @@
 
 import os
 import re
+
+import urllib
 # import requests
 # import requests_ftp                             # pip install requests_ftp
 # import urllib.request
@@ -67,7 +69,7 @@ class Beolingus:
         print ("to file:                ", self.file)
         filename = "<filename>"
         headers  = "<headers>"
-#         filename,headers = urllib.request.urlretrieve (self.url, self.file)
+        filename,headers = urllib.request.urlretrieve (self.url, self.file)
         print ("download returned with ")
         print ("    ",filename)
         print ("    ",headers)
